@@ -1106,7 +1106,7 @@
     <string name="content_settings_header_nav_tabs">علامات تبويب التنقل</string>
     <string name="settings_home_shorts_shelf_title">رفّ المقاطع القصير في الشاشة الرئيسية</string>
     <string name="settings_home_shorts_shelf_subtitle">اعرض رف الفيديوهات القصيرة الأفقية على الشاشة الرئيسية.</string>
-    <string name="settings_categories_nav_tab_title">علامة التبويب إستكشاف في شريط التنقل</string>
+    <string name="settings_categories_nav_tab_title">علامة تبويب إستكشاف في شريط التنقل</string>
     <string name="settings_categories_nav_tab_subtitle">اعرض علامة تبويب \"الأكثر رواجاً والفئات\" في شريط التنقل السفلي.</string>
     <string name="nav_explore">استكشاف</string>
     <string name="settings_continue_watching_subtitle">اعرض رفًا يحتوي على مقاطع الفيديو قيد التقدم على الشاشة الرئيسية.</string>
@@ -2819,4 +2819,19 @@
     <string name="widget_no_on_repeat">ستظهر هنا الأغاني التي تستمع إليها بإستمرار</string>
     <string name="playlist_download_queue_empty">تعذّر إضافة أي تنزيلات من قائمة التشغيل هذه</string>
     <string name="artist_known_related_badge">ضمن اقتراحاتك</string>
+    <string name="removed_from_history">تمت إزالته من السجل</string>
+    <string name="removed_from_likes">تمت إزالته من الإعجابات</string>
+    <string name="delete_download_dialog_title">هل تريد حذف التحميل؟</string>
+    <string name="delete_download_dialog_text">سيتم إزالة %1$s من هذا الجهاز.</string>
+    <string name="library_empty_title">المكتبة فارغة</string>
+    <string name="library_empty_body">ستظهر هنا الفيديوهات والموسيقى التي تشاهدها أو تعجبك أو تحفظها أو تنزلها.</string>
+    <string name="playlist_load_failed">تعذَّر تحميل قائمة التشغيل</string>
+    <string name="library_settings_subtitle">التشغيل، والتنزيلات، والمظهر، والبيانات</string>
+    <string name="music_search_no_results">لا توجد نتائج لـ \"%1$s\"</string>
+    <string name="chart_position_template">#%1$d</string>
+    <string name="download_progress_percent">%1$d%%</string>
+    <string name="download_status_paused_template">%1$d%% • %2$s</string>
+    <string name="file_size_kb">%1$s KB</string>
+    <string name="file_size_mb">%1$s MB</string>
+    <string name="file_size_gb">%1$s GB</string>
 </resources>
