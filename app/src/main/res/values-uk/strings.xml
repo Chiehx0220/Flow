@@ -204,7 +204,7 @@
     <string name="player_appearance_header">Налаштування керування програвачем</string>
     <string name="player_appearance_style_subtitle">Виберіть візуальний стиль панелі пошуку</string>
     <string name="settings_item_player_appearance">Зовнішній вигляд програвача</string>
-    <string name="style_default">Стандартна</string>
+    <string name="style_default">Експресивний</string>
     <string name="style_metrolist">Товстий</string>
     <string name="style_metrolist_slim">Стандартний</string>
     <string name="style_squiggly">Хвилястий</string>
@@ -1559,7 +1559,7 @@
     <string name="datetime_mode_header">Показ часу</string>
     <string name="datetime_format_header">Формат точної дати</string>
     <string name="datetime_overrides_header">Перевизначення для окремих секцій</string>
-    <string name="datetime_overrides_note">Перевизначити відображення часу для окремих розділів. Стандартне значення копіює налаштування вище.</string>
+    <string name="datetime_overrides_note">Перевизначити показ часу для окремих розділів. Типове значення копіює налаштування вище.</string>
     <string name="datetime_sample_relative">7 місяців тому</string>
     <string name="datetime_mode_relative">Відносний час</string>
     <string name="datetime_mode_exact">Точна дата</string>
@@ -1669,7 +1669,7 @@
     <string name="recognition_clear_history_body">Це видалить усі розпізнані пісні. Цю дію неможливо скасувати.</string>
     <string name="player_settings_display">Дисплей</string>
     <string name="player_settings_ambient_mode">Ambient режим</string>
-    <string name="player_settings_ambient_mode_subtitle">Заповнює \"чорні смуги\" навколо відео м\'яким світінням кольором відео</string>
+    <string name="player_settings_ambient_mode_subtitle">Заповнює смуги навколо відео м’яким сяйвом його кольорів</string>
     <string name="player_appearance_shorts_ui_title">Інтерфейс програвача shorts</string>
     <string name="player_appearance_shorts_ui_subtitle">Виберіть, яка частина накладання Shorts має бути видимою</string>
     <string name="shorts_player_ui_default">Стандартне</string>
@@ -1767,7 +1767,7 @@
     <string name="onboarding_channels_subtitle">Шукайте канали, на які ви вже підписані, та підписуйтесь одним дотиком.</string>
     <string name="onboarding_channels_search_placeholder">Пошук каналів…</string>
     <string name="onboarding_channels_empty_prompt">Введіть ім\'я каналу для пошуку</string>
-    <string name="onboarding_channels_no_results">Збігів з \"%1$s\" не знайдено</string>
+    <string name="onboarding_channels_no_results">Збігів з «%1$s» не знайдено</string>
     <string name="onboarding_channels_subscribers">%1$s підписників</string>
     <string name="onboarding_channels_subscribed">Підписано</string>
     <string name="onboarding_channels_subscribe">Підписатись</string>
@@ -2138,8 +2138,8 @@
     <string name="ui_download_start_failed">Не вдалось почати завантаження: %1$s</string>
     <string name="toast_unsubscribed_from">Відписано від %1$s</string>
     <string name="toast_subscribed_to">Підписано на %1$s</string>
-    <string name="toast_removed_from_watch_later">Вилучено з \"Переглянути пізніше\"</string>
-    <string name="toast_added_to_watch_later">Додано до \"Переглянути пізніше\"</string>
+    <string name="toast_removed_from_watch_later">Вилучено з «Переглянути пізніше»</string>
+    <string name="toast_added_to_watch_later">Додано до «Переглянути пізніше»</string>
     <string name="toast_fetching_download_links">Отримання посилань для завантаження…</string>
     <string name="toast_download_started">Завантаження почато: %1$s</string>
     <string name="toast_trying_sabr_download">Спроба завантаження SABR…</string>
@@ -2359,4 +2359,168 @@
         <item quantity="other">%1$d завантажень призупинено</item>
     </plurals>
     <string name="download_stream_blocked_403">Стрим заблоковано або термін дії посилання закінчився (HTTP 403). Спробуйте іншу якість чи кодек або повторіть спробу пізніше.</string>
+    <string name="music_search_no_results">Немає результатів для «%1$s»</string>
+    <plurals name="subscriptions_refresh_progress_template">
+        <item quantity="one">Оновлено %1$d з %2$d каналу</item>
+        <item quantity="few">Оновлено %1$d з %2$d каналів</item>
+        <item quantity="many">Оновлено %1$d з %2$d каналів</item>
+        <item quantity="other">Оновлено %1$d з %2$d каналів</item>
+    </plurals>
+    <plurals name="subscriptions_last_refreshed_template">
+        <item quantity="one">Останнє оновлення: %1$s — перевірено %2$d відео</item>
+        <item quantity="few">Останнє оновлення: %1$s — перевірено %2$d відео</item>
+        <item quantity="many">Останнє оновлення: %1$s — перевірено %2$d відео</item>
+        <item quantity="other">Останнє оновлення: %1$s — перевірено %2$d відео</item>
+    </plurals>
+    <string name="conjunction_and">та</string>
+    <string name="streamed_date_template">Трансляція %1$s</string>
+    <plurals name="download_all_confirmation">
+        <item quantity="one">Завантажити %1$d відео? Це може зайняти значний обсяг пам’яті.</item>
+        <item quantity="few">Завантажити %1$d відео? Це може зайняти значний обсяг пам’яті.</item>
+        <item quantity="many">Завантажити %1$d відео? Це може зайняти значний обсяг пам’яті.</item>
+        <item quantity="other">Завантажити %1$d відео? Це може зайняти значний обсяг пам’яті.</item>
+    </plurals>
+    <string name="lyrics_save_file">Зберегти як файл .lrc</string>
+    <plurals name="queue_track_count">
+        <item quantity="one">%1$d трек</item>
+        <item quantity="few">%1$d треки</item>
+        <item quantity="many">%1$d треків</item>
+        <item quantity="other">%1$d треків</item>
+    </plurals>
+    <string name="lyrics_saved">Текст пісні збережено</string>
+    <string name="lyrics_save_failed">Не вдалося зберегти текст пісні</string>
+    <string name="lyrics_choose_source">Оберіть джерело тексту пісні</string>
+    <string name="lyrics_synced_badge">Синхронізовано</string>
+    <string name="lyrics_edit">Редагувати текст пісні</string>
+    <string name="lyrics_copy">Копіювати текст пісні</string>
+    <string name="lyrics_copied">Текст пісні скопійовано</string>
+    <string name="lyrics_alignment">Вирівнювання</string>
+    <string name="lyrics_align_left">Вирівняти ліворуч</string>
+    <string name="lyrics_align_center">Вирівняти по центру</string>
+    <string name="lyrics_align_right">Вирівняти праворуч</string>
+    <string name="lyrics_adjust_sync">Налаштувати зміщення синхронізації</string>
+    <string name="lyrics_sync_offset_value">%1$s с</string>
+    <string name="import_success">%1$s успішно імпортовано</string>
+    <plurals name="deep_flow_duration_hours">
+        <item quantity="one">%1$d година</item>
+        <item quantity="few">%1$d години</item>
+        <item quantity="many">%1$d годин</item>
+        <item quantity="other">%1$d годин</item>
+    </plurals>
+    <plurals name="appearance_themes_count_all">
+        <item quantity="one">%1$d тема</item>
+        <item quantity="few">%1$d теми</item>
+        <item quantity="many">%1$d тем</item>
+        <item quantity="other">%1$d тем</item>
+    </plurals>
+    <string name="player_background_style_immersive">Імерсивний витвір мистецтва</string>
+    <string name="style_thick">Товстий</string>
+    <string name="style_compact">Компактний</string>
+    <string name="style_wavy">Хвилястий</string>
+    <plurals name="lyrics_providers_enabled">
+        <item quantity="one">Увімкнено %1$d постачальник з %2$d</item>
+        <item quantity="few">Увімкнено %1$d постачальники з %2$d</item>
+        <item quantity="many">Увімкнено %1$d постачальників з %2$d</item>
+        <item quantity="other">Увімкнено %1$d постачальників з %2$d</item>
+    </plurals>
+    <plurals name="player_settings_shorts_playback_mode_auto_interval_summary">
+        <item quantity="one">Автогортання кожну %1$d секунду</item>
+        <item quantity="few">Автогортання кожні %1$d секунди</item>
+        <item quantity="many">Автогортання кожні %1$d секунд</item>
+        <item quantity="other">Автогортання кожні %1$d секунд</item>
+    </plurals>
+    <plurals name="player_settings_shorts_auto_scroll_seconds_template">
+        <item quantity="one">%1$d секунда</item>
+        <item quantity="few">%1$d секунди</item>
+        <item quantity="many">%1$d секунд</item>
+        <item quantity="other">%1$d секунд</item>
+    </plurals>
+    <plurals name="player_settings_autoplay_countdown_seconds_template">
+        <item quantity="one">%1$d секунда</item>
+        <item quantity="few">%1$d секунди</item>
+        <item quantity="many">%1$d секунд</item>
+        <item quantity="other">%1$d секунд</item>
+    </plurals>
+    <string name="player_settings_video_codec_fallback">Резервний кодек</string>
+    <string name="player_settings_video_codec_fallback_auto">Автоматичний</string>
+    <string name="player_settings_video_codec_fallback_dialog_body">Кодек, який використовуватиметься, якщо відео недоступне у вашому пріоритетному кодеку. Автоматичний режим вибирає найбільш сумісний варіант на розсуд застосунку, зазвичай це H.264.</string>
+    <string name="player_settings_video_codec_fallback_auto_desc">Дозволити застосунку вибирати (бажаний H.264)</string>
+    <plurals name="player_settings_double_tap_seek_subtitle">
+        <item quantity="one">Подвійний дотик: %1$d секунда на кожну сторону</item>
+        <item quantity="few">Подвійний дотик: %1$d секунди на кожну сторону</item>
+        <item quantity="many">Подвійний дотик: %1$d секунд на кожну сторону</item>
+        <item quantity="other">Подвійний дотик: %1$d секунд на кожну сторону</item>
+    </plurals>
+    <plurals name="topics_count_template">
+        <item quantity="one">%1$d тема</item>
+        <item quantity="few">%1$d теми</item>
+        <item quantity="many">%1$d тем</item>
+        <item quantity="other">%1$d тем</item>
+    </plurals>
+    <plurals name="topics_blocked_count_plural">
+        <item quantity="one">%1$d тема</item>
+        <item quantity="few">%1$d теми</item>
+        <item quantity="many">%1$d тем</item>
+        <item quantity="other">%1$d тем</item>
+    </plurals>
+    <plurals name="selected_count_template">
+        <item quantity="one">Вибрано: %1$d</item>
+        <item quantity="few">Вибрано: %1$d</item>
+        <item quantity="many">Вибрано: %1$d</item>
+        <item quantity="other">Вибрано: %1$d</item>
+    </plurals>
+    <plurals name="every_min_template">
+        <item quantity="one">Кожну %1$d хвилину</item>
+        <item quantity="few">Кожні %1$d хвилини</item>
+        <item quantity="many">Кожні %1$d хвилин</item>
+        <item quantity="other">Кожні %1$d хвилин</item>
+    </plurals>
+    <plurals name="every_minutes_template">
+        <item quantity="one">Кожну %1$d хвилину</item>
+        <item quantity="few">Кожні %1$d хвилини</item>
+        <item quantity="many">Кожні %1$d хвилин</item>
+        <item quantity="other">Кожні %1$d хвилин</item>
+    </plurals>
+    <plurals name="sleep_timer_minutes">
+        <item quantity="one">%1$d хв</item>
+        <item quantity="few">%1$d хв</item>
+        <item quantity="many">%1$d хв</item>
+        <item quantity="other">%1$d хв</item>
+    </plurals>
+    <plurals name="currently_searches_template">
+        <item quantity="one">Зараз: %1$d пошук</item>
+        <item quantity="few">Зараз: %1$d пошуки</item>
+        <item quantity="many">Зараз: %1$d пошуків</item>
+        <item quantity="other">Зараз: %1$d пошуків</item>
+    </plurals>
+    <plurals name="delete_after_days_template">
+        <item quantity="one">Видалити через %1$d день</item>
+        <item quantity="few">Видалити через %1$d дні</item>
+        <item quantity="many">Видалити через %1$d днів</item>
+        <item quantity="other">Видалити через %1$d днів</item>
+    </plurals>
+    <plurals name="delete_older_than_template">
+        <item quantity="one">Видалити пошукові запити, старіші за %1$d день</item>
+        <item quantity="few">Видалити пошукові запити, старіші за %1$d дні</item>
+        <item quantity="many">Видалити пошукові запити, старіші за %1$d днів</item>
+        <item quantity="other">Видалити пошукові запити, старіші за %1$d днів</item>
+    </plurals>
+    <plurals name="searches_count_template">
+        <item quantity="one">%1$d пошук</item>
+        <item quantity="few">%1$d пошуки</item>
+        <item quantity="many">%1$d пошуків</item>
+        <item quantity="other">%1$d пошуків</item>
+    </plurals>
+    <plurals name="days_count_template">
+        <item quantity="one">%1$d день</item>
+        <item quantity="few">%1$d дні</item>
+        <item quantity="many">%1$d днів</item>
+        <item quantity="other">%1$d днів</item>
+    </plurals>
+    <string name="import_label_newpipe_subscriptions">Підписки NewPipe</string>
+    <string name="import_label_youtube_subscriptions">Підписки YouTube</string>
+    <string name="import_label_youtube_watch_history">Історія переглядів YouTube</string>
+    <string name="import_label_freetube_watch_history">Історія переглядів FreeTube</string>
+    <string name="import_label_newpipe_watch_history">Історія переглядів NewPipe</string>
+    <string name="import_label_libretube_subscriptions">Підписки LibreTube</string>
 </resources>
