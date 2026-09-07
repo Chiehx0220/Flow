@@ -2529,4 +2529,13 @@
     <string name="music_discovery_appetite">Soif de découvertes</string>
     <string name="music_discovery_appetite_detail">Quelle proportion de morceaux récents le moteur intègre-t-il dans la sélection ?</string>
     <string name="music_persona_empty">Mettez de la musique et le moteur commencera à apprendre</string>
+    <string name="lyrics_save_file">Enregistrer sous forme de fichier .lrc</string>
+    <plurals name="queue_track_count">
+        <item quantity="one">%1$d titre</item>
+        <item quantity="many">%1$d titres</item>
+        <item quantity="other">%1$d titres</item>
+    </plurals>
+    <string name="lyrics_saved">Paroles enregistrées</string>
+    <string name="lyrics_save_failed">Impossible d\'enregistrer les paroles</string>
+    <string name="lyrics_choose_source">Choisissez la source des paroles</string>
 </resources>
