@@ -1738,7 +1738,7 @@
     <string name="sync_confirmation_code">Code de confirmation : %1$s</string>
     <string name="sync_expires_in">Expire dans %1$ds</string>
     <string name="sync_qr_network_note">Les deux appareils doivent être connectés au même réseau Wi-Fi (ou au point d\'accès d\'un des deux appareils). Vous devrez peut-être autoriser l\'accès à Flow via un pare-feu.</string>
-    <string name="sync_sas_title">Les codes correspondent-ils ?</string>
+    <string name="sync_sas_title">Les codes correspondent-ils ?</string>
     <string name="sync_sas_body">Vérifiez que ce code à 6 chiffres est identique sur les deux appareils avant de continuer.</string>
     <string name="sync_sas_differ">Ils diffèrent</string>
     <string name="sync_sas_match">Ils correspondent</string>
