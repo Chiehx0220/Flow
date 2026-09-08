@@ -66,6 +66,7 @@ class PlayerPreferences(
         val PLAYBACK_SPEED = floatPreferencesKey("playback_speed")
         val SLEEP_TIMER_CLOSE_APP_ON_EXPIRY = booleanPreferencesKey("sleep_timer_close_app_on_expiry")
         val TRENDING_REGION = stringPreferencesKey("trending_region")
+        val LOCAL_SERVER_ENABLED = booleanPreferencesKey("local_server_enabled")
         val APP_LANGUAGE = stringPreferencesKey("app_language")
         val CONTENT_LANGUAGE = stringPreferencesKey("content_language")
         val MUSIC_LOUDNESS_NORMALIZATION_ENABLED = booleanPreferencesKey("music_loudness_normalization_enabled")
@@ -987,6 +988,18 @@ class PlayerPreferences(
     suspend fun setTrendingRegion(region: String) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.TRENDING_REGION] = region
+        }
+    }
+
+    val localServerEnabled: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.LOCAL_SERVER_ENABLED] ?: false
+            }
+
+    suspend fun setLocalServerEnabled(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.LOCAL_SERVER_ENABLED] = enabled
         }
     }
 

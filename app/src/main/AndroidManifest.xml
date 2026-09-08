@@ -216,7 +216,15 @@
             android:exported="false"
             android:foregroundServiceType="dataSync">
         </service>
-        
+
+        <!-- Local Server foreground service: serves the local web UI on port 8080. -->
+        <service
+            android:name="org.schabi.newpipe.localserver.ServerService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync">
+        </service>
+
         <!-- Notification action receiver for downloads and other actions -->
         <receiver 
             android:name=".notification.NotificationActionReceiver"

@@ -100,6 +100,18 @@ class ViewHistory private constructor(private val context: Context) {
     suspend fun getSavedPosition(videoId: String): Long = dao.getPosition(videoId) ?: 0L
 
     /**
+     * Update just the progress columns of an already-existing entry (e.g. a periodic
+     * watch-progress ping that has no title/thumbnail/channel to report). No-ops if the
+     * video has no history row yet - callers that might hit that should [touchHistoryEntry] first.
+     */
+    suspend fun updatePlaybackProgress(videoId: String, position: Long, duration: Long) {
+        dao.updateProgress(videoId, position, duration, System.currentTimeMillis())
+    }
+
+    /** Bare IDs of every non-music, non-local video the user has watched (any progress > 0). */
+    suspend fun getAllWatchedVideoIds(): Set<String> = dao.getAllWatchedVideoIds().toHashSet()
+
+    /**
      * Create-or-touch a history entry **without** overwriting an already-saved
      * playback position.  Call this on video open so the video appears in history
      * even if the user closes it immediately, while leaving any real progress intact.

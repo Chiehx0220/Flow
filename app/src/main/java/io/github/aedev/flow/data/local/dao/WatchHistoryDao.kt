@@ -27,6 +27,14 @@ interface WatchHistoryDao {
     @Query("DELETE FROM watch_history WHERE videoId = :videoId")
     suspend fun deleteEntry(videoId: String)
 
+    /**
+     * Update only the progress columns for an existing entry, leaving title/thumbnail/channel
+     * untouched. Used for periodic playback-progress pings that don't carry that metadata -
+     * unlike [upsert] (full REPLACE), this can't clobber it.
+     */
+    @Query("UPDATE watch_history SET position = :position, duration = :duration, timestamp = :timestamp WHERE videoId = :videoId")
+    suspend fun updateProgress(videoId: String, position: Long, duration: Long, timestamp: Long)
+
     @Query("DELETE FROM watch_history")
     suspend fun clearAll()
 

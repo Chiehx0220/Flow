@@ -131,6 +131,7 @@ fun SettingsScreen(
 
     // Player preferences states
     val currentRegion by playerPreferences.trendingRegion.collectAsState(initial = "US")
+    val localServerEnabled by playerPreferences.localServerEnabled.collectAsState(initial = false)
     val currentAppLanguage by playerPreferences.appLanguage.collectAsState(initial = AppLanguageManager.SYSTEM_DEFAULT)
     val discordSettingsState by DiscordPresenceRuntime.settingsState.collectAsStateWithLifecycle()
     val discordSettingsSummary = discordSettingsSummaryText(discordSettingsState)
@@ -1127,6 +1128,75 @@ fun SettingsScreen(
                             subtitle = REGION_NAMES[currentRegion] ?: currentRegion,
                             onClick = { showRegionDialog = true },
                         )
+                        HorizontalDivider(
+                            Modifier.padding(start = 56.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        )
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Dns,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.width(16.dp))
+                            val localServerAddress =
+                                remember(localServerEnabled) {
+                                    if (localServerEnabled) {
+                                        org.schabi.newpipe.localserver.ServerService.getLocalIpAddress()?.let { ip ->
+                                            "http://$ip:${org.schabi.newpipe.localserver.ServerService.PORT}"
+                                        }
+                                    } else {
+                                        null
+                                    }
+                                }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.settings_item_local_server),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                )
+                                Text(
+                                    text = localServerAddress ?: stringResource(R.string.settings_item_local_server_subtitle),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            Switch(
+                                checked = localServerEnabled,
+                                onCheckedChange = { enabled ->
+                                    coroutineScope.launch {
+                                        playerPreferences.setLocalServerEnabled(enabled)
+                                    }
+                                    if (enabled) {
+                                        org.schabi.newpipe.localserver.ServerService.start(context)
+                                    } else {
+                                        org.schabi.newpipe.localserver.ServerService.stop(context)
+                                    }
+                                },
+                            )
+                        }
+                        if (localServerEnabled) {
+                            HorizontalDivider(
+                                Modifier.padding(start = 56.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            )
+                            SettingsItem(
+                                icon = Icons.Outlined.OpenInBrowser,
+                                title = stringResource(R.string.settings_item_open_local_server),
+                                subtitle = stringResource(R.string.settings_item_open_local_server_subtitle),
+                                onClick = {
+                                    val ip = org.schabi.newpipe.localserver.ServerService.getLocalIpAddress() ?: "127.0.0.1"
+                                    val url = "http://$ip:${org.schabi.newpipe.localserver.ServerService.PORT}"
+                                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                                    context.startActivity(intent)
+                                },
+                            )
+                        }
                     }
                 }
 
