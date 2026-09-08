@@ -2488,4 +2488,8 @@
     <string name="music_persona_maturity_mature">Maturo</string>
     <string name="music_metric_total_plays">Numero di riproduzioni</string>
     <string name="music_metric_artists">Artisti</string>
+    <string name="section_artists_for_you">Artisti per te</string>
+    <string name="music_content_language_title">Lingua dei contenuti</string>
+    <string name="music_content_language_follow_app">Segui la lingua dell\'app</string>
+    <string name="music_content_language_dialog_title">Seleziona lingua dei contenuti</string>
 </resources>

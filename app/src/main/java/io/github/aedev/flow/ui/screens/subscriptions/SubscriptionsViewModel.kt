@@ -11,7 +11,9 @@ import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.local.dao.SubscriptionGroupDao
 import io.github.aedev.flow.data.local.entity.SubscriptionGroupEntity
 import io.github.aedev.flow.data.model.Channel
+import io.github.aedev.flow.data.model.SubscriptionGroup
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.model.toUiModel
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository
 import io.github.aedev.flow.data.subscriptions.SubscriptionRefreshPlan
 import io.github.aedev.flow.data.subscriptions.SubscriptionWatchedVideos
@@ -32,6 +34,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -207,10 +210,16 @@ class SubscriptionsViewModel
             }
 
             viewModelScope.launch(PerformanceDispatcher.diskIO) {
-                while (true) {
-                    delay(RELATIVE_TIME_TICK_MS)
-                    refreshVisibleFeed()
-                }
+                _uiState.subscriptionCount
+                    .map { observers -> observers > 0 }
+                    .distinctUntilChanged()
+                    .collectLatest { observed ->
+                        if (!observed) return@collectLatest
+                        while (true) {
+                            delay(RELATIVE_TIME_TICK_MS)
+                            refreshVisibleFeed()
+                        }
+                    }
             }
 
             viewModelScope.launch(PerformanceDispatcher.networkIO) {
@@ -274,6 +283,7 @@ class SubscriptionsViewModel
                     _uiState.update {
                         it.copy(
                             failedChannelIds = progress.failedChannelIds,
+                            failedChannelReasons = progress.failedChannelReasons,
                             refreshProcessedChannels = progress.processedChannels,
                             refreshTotalChannels = progress.totalChannels,
                         )
@@ -579,6 +589,21 @@ class SubscriptionsViewModel
             }
         }
 
+        fun reorderGroups(
+            fromIndex: Int,
+            toIndex: Int,
+        ) {
+            viewModelScope.launch(PerformanceDispatcher.diskIO) {
+                val groups = subscriptionGroupDao.getAllGroupsOnce().toMutableList()
+                if (fromIndex !in groups.indices || toIndex !in groups.indices || fromIndex == toIndex) {
+                    return@launch
+                }
+
+                groups.add(toIndex, groups.removeAt(fromIndex))
+                subscriptionGroupDao.insertAll(groups.mapIndexed { index, group -> group.copy(sortOrder = index) })
+            }
+        }
+
         fun moveGroup(
             name: String,
             direction: Int,
@@ -666,7 +691,7 @@ class SubscriptionsViewModel
             viewModelScope.launch(PerformanceDispatcher.networkIO) {
                 val failed = _uiState.value.failedChannelIds
                 if (failed.isEmpty()) return@launch
-                _uiState.update { it.copy(failedChannelIds = emptySet()) }
+                _uiState.update { it.copy(failedChannelIds = emptySet(), failedChannelReasons = emptyMap()) }
                 runRefresh(
                     plan = SubscriptionRefreshPlan(channelIds = failed.toList(), isFullRefresh = false),
                     showLoading = true,
@@ -675,7 +700,7 @@ class SubscriptionsViewModel
         }
 
         fun dismissFailedChannels() {
-            _uiState.update { it.copy(failedChannelIds = emptySet()) }
+            _uiState.update { it.copy(failedChannelIds = emptySet(), failedChannelReasons = emptyMap()) }
         }
 
         fun unsubscribe(channelId: String) {
@@ -768,6 +793,7 @@ data class SubscriptionsUiState(
     val excludedShortsChannelIds: Set<String> = emptySet(),
     /** Channels the last refresh could not reach at all; surfaced instead of silently showing less. */
     val failedChannelIds: Set<String> = emptySet(),
+    val failedChannelReasons: Map<String, String> = emptyMap(),
 ) {
     /** Display names for [failedChannelIds], falling back to the raw id for an unknown channel. */
     val failedChannelNames: List<String>
@@ -779,16 +805,3 @@ data class SubscriptionsUiState(
                 .sorted()
         }
 }
-
-data class SubscriptionGroup(
-    val name: String,
-    val channelIds: List<String>,
-    val sortOrder: Int = 0,
-)
-
-fun SubscriptionGroupEntity.toUiModel() =
-    SubscriptionGroup(
-        name = name,
-        channelIds = if (channelIds.isBlank()) emptyList() else channelIds.split(",").filter { it.isNotBlank() },
-        sortOrder = sortOrder,
-    )

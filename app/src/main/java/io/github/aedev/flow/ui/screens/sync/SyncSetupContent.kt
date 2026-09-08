@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CameraAlt
+import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Shield
@@ -22,9 +24,11 @@ import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,11 +36,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -44,11 +51,15 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import io.github.aedev.flow.R
+import io.github.aedev.flow.utils.readPlainText
+import kotlinx.coroutines.launch
 
 /**
  * The pre-session steps: pick a direction, pick what travels, pick how the two devices pair, and
  * (when this device scans) the camera step.
  */
+
+private const val MAX_CONNECTION_DATA_LENGTH = 4096
 
 @Composable
 internal fun SyncChooserContent(
@@ -152,6 +163,7 @@ internal fun SyncTransportContent(
     scanHint: String,
     onShowQr: () -> Unit,
     onScan: () -> Unit,
+    onManual: () -> Unit,
 ) {
     SyncOptionCard(
         icon = Icons.Outlined.QrCode2,
@@ -164,6 +176,60 @@ internal fun SyncTransportContent(
         title = scanLabel,
         body = scanHint,
         onClick = onScan,
+    )
+    SyncOptionCard(
+        icon = Icons.Outlined.Link,
+        title = stringResource(R.string.sync_enter_connection_data),
+        body = stringResource(R.string.sync_enter_connection_data_hint),
+        onClick = onManual,
+    )
+}
+
+@Composable
+internal fun SyncManualEntryContent(onSubmit: (String) -> Unit) {
+    val context = LocalContext.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    var connectionData by rememberSaveable { mutableStateOf("") }
+    val trimmedData = connectionData.trim()
+
+    SyncStepHeader(
+        icon = Icons.Outlined.Link,
+        body = stringResource(R.string.sync_enter_connection_data_hint),
+    )
+    OutlinedTextField(
+        value = connectionData,
+        onValueChange = { value ->
+            if (value.length <= MAX_CONNECTION_DATA_LENGTH) connectionData = value
+        },
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(R.string.sync_connection_data_label)) },
+        trailingIcon = {
+            IconButton(
+                onClick = {
+                    scope.launch {
+                        clipboard.readPlainText(context)?.let {
+                            connectionData = it.take(MAX_CONNECTION_DATA_LENGTH)
+                        }
+                    }
+                },
+            ) {
+                Icon(
+                    Icons.Outlined.ContentPaste,
+                    contentDescription = stringResource(R.string.sync_paste_connection_data),
+                )
+            }
+        },
+        maxLines = 4,
+    )
+    SyncInfoRow(
+        icon = Icons.Outlined.Shield,
+        text = stringResource(R.string.sync_connection_data_security_note),
+    )
+    SyncActionRow(
+        confirmLabel = stringResource(R.string.sync_connect),
+        onConfirm = { onSubmit(trimmedData) },
+        confirmEnabled = trimmedData.isNotEmpty(),
     )
 }
 

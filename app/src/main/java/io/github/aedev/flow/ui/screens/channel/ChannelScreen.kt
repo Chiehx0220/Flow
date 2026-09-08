@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.NotificationsOff
@@ -99,12 +100,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import io.github.aedev.flow.R
+import io.github.aedev.flow.data.model.SubscriptionGroup
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.innertube.pages.CommunityPost
 import io.github.aedev.flow.ui.components.ChannelBanner
@@ -115,6 +118,10 @@ import io.github.aedev.flow.ui.components.FullSizeImageDialog
 import io.github.aedev.flow.ui.components.PlaylistCard
 import io.github.aedev.flow.ui.components.SortChipRow
 import io.github.aedev.flow.ui.components.VideoCardFullWidth
+import io.github.aedev.flow.ui.components.shared.CollectionEditDialog
+import io.github.aedev.flow.ui.components.shared.CollectionSheetEntry
+import io.github.aedev.flow.ui.components.shared.FlowSubscribeButton
+import io.github.aedev.flow.ui.components.shared.SaveToCollectionSheet
 import io.github.aedev.flow.ui.components.shared.ShortWatchedIndicator
 import io.github.aedev.flow.ui.components.sortCommentsByFilter
 import io.github.aedev.flow.ui.theme.extendedColors
@@ -147,6 +154,9 @@ fun ChannelScreen(
     val allVideos by viewModel.videosAll.collectAsState()
     val allLiveVideos by viewModel.liveAll.collectAsState()
     val isLoadingAllVideos by viewModel.isLoadingAllVideos.collectAsState()
+    val subscriptionGroups by viewModel.subscriptionGroups.collectAsStateWithLifecycle()
+    var showGroupSheet by rememberSaveable { mutableStateOf(false) }
+    var showCreateGroupDialog by rememberSaveable { mutableStateOf(false) }
 
     val shortsLazyPagingItems = shortsPagingFlow?.collectAsLazyPagingItems()
     val shortsSorts by viewModel.shortsSorts.collectAsState()
@@ -268,6 +278,7 @@ fun ChannelScreen(
                             onSubscribeClick = { viewModel.toggleSubscription() },
                             onUnsubscribeClick = { viewModel.unsubscribe() },
                             onNotificationChange = { viewModel.setNotificationState(it) },
+                            onManageGroups = { showGroupSheet = true },
                             onTabSelected = { viewModel.selectTab(it) },
                             onSearchToggle = { viewModel.setSearchActive(!uiState.searchActive) },
                             onSearchQueryChange = { viewModel.searchInChannel(it) },
@@ -315,12 +326,41 @@ fun ChannelScreen(
             )
         }
     }
+
+    val channelId = uiState.channelInfo?.id.orEmpty()
+    if (showGroupSheet && channelId.isNotBlank()) {
+        ChannelGroupSheet(
+            groups = subscriptionGroups,
+            channelId = channelId,
+            onToggle = { groupName, inGroup -> viewModel.setChannelInGroup(groupName, channelId, inGroup) },
+            onCreateNew = {
+                showGroupSheet = false
+                showCreateGroupDialog = true
+            },
+            onDismiss = { showGroupSheet = false },
+        )
+    }
+
+    if (showCreateGroupDialog && channelId.isNotBlank()) {
+        CollectionEditDialog(
+            title = stringResource(R.string.new_group),
+            confirmLabel = stringResource(R.string.save),
+            onDismiss = { showCreateGroupDialog = false },
+            onConfirm = { name, _ ->
+                viewModel.createGroupWithChannel(name, channelId)
+                showCreateGroupDialog = false
+            },
+            icon = Icons.Rounded.Folder,
+            showDescription = false,
+        )
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun ChannelContent(
     uiState: ChannelUiState,
+    onManageGroups: (() -> Unit)?,
     communityUiState: ChannelCommunityUiState,
     allVideos: List<Video>,
     isLoadingAllVideos: Boolean,
@@ -704,6 +744,7 @@ private fun ChannelContent(
                     onSubscribeClick = onSubscribeClick,
                     onUnsubscribeClick = onUnsubscribeClick,
                     onNotificationChange = onNotificationChange,
+                    onManageGroups = onManageGroups.takeIf { uiState.isSubscribed },
                 )
             }
 
@@ -826,6 +867,39 @@ private fun FilterAndToggleBar(
 
 // Channel header — banner + avatar + info + subscribe
 @Composable
+private fun ChannelGroupSheet(
+    groups: List<SubscriptionGroup>,
+    channelId: String,
+    onToggle: (String, Boolean) -> Unit,
+    onCreateNew: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val entries =
+        remember(groups, channelId) {
+            groups.map { group ->
+                CollectionSheetEntry(
+                    id = group.name,
+                    name = group.name,
+                    supporting = "",
+                    thumbnailUrl = "",
+                    isSaved = channelId in group.channelIds,
+                )
+            }
+        }
+
+    SaveToCollectionSheet(
+        title = stringResource(R.string.channel_groups_sheet_title),
+        entries = entries,
+        placeholderIcon = Icons.Rounded.Folder,
+        createLabel = stringResource(R.string.new_group),
+        emptyLabel = stringResource(R.string.channel_groups_empty),
+        onToggle = { entry -> onToggle(entry.id, !entry.isSaved) },
+        onCreateNew = onCreateNew,
+        onDismiss = onDismiss,
+    )
+}
+
+@Composable
 private fun ChannelHeader(
     channelInfo: org.schabi.newpipe.extractor.channel.ChannelInfo,
     channelVideoCountText: String?,
@@ -834,6 +908,7 @@ private fun ChannelHeader(
     onSubscribeClick: () -> Unit,
     onUnsubscribeClick: () -> Unit,
     onNotificationChange: (Boolean) -> Unit,
+    onManageGroups: (() -> Unit)?,
 ) {
     val bannerUrl =
         try {
@@ -946,12 +1021,13 @@ private fun ChannelHeader(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            SubscribeButton(
+            FlowSubscribeButton(
                 isSubscribed = isSubscribed,
                 isNotificationsEnabled = isNotificationsEnabled,
                 onSubscribeClick = onSubscribeClick,
                 onUnsubscribeClick = onUnsubscribeClick,
                 onNotificationChange = onNotificationChange,
+                onManageGroups = onManageGroups,
             )
         }
 
@@ -999,128 +1075,6 @@ private fun ChannelHeader(
 }
 
 // Subscribe button
-@Composable
-fun SubscribeButton(
-    isSubscribed: Boolean,
-    isNotificationsEnabled: Boolean,
-    onSubscribeClick: () -> Unit,
-    onUnsubscribeClick: () -> Unit,
-    onNotificationChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    val containerColor by animateColorAsState(
-        targetValue =
-            if (isSubscribed) {
-                MaterialTheme.colorScheme.surfaceVariant
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            },
-        label = "subscribeBg",
-    )
-    val contentColor by animateColorAsState(
-        targetValue =
-            if (isSubscribed) {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            } else {
-                MaterialTheme.colorScheme.surface
-            },
-        label = "subscribeFg",
-    )
-
-    Box(modifier = modifier) {
-        Button(
-            onClick = {
-                if (isSubscribed) {
-                    expanded = true
-                } else {
-                    onSubscribeClick()
-                }
-            },
-            shape = RoundedCornerShape(20.dp),
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = containerColor,
-                    contentColor = contentColor,
-                ),
-            contentPadding = PaddingValues(horizontal = 18.dp, vertical = 9.dp),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.animateContentSize(),
-            ) {
-                AnimatedVisibility(visible = isSubscribed) {
-                    Icon(
-                        imageVector = if (isNotificationsEnabled) Icons.Rounded.NotificationsActive else Icons.Rounded.NotificationsOff,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
-                Text(
-                    text =
-                        if (isSubscribed) {
-                            stringResource(R.string.subscribed)
-                        } else {
-                            stringResource(R.string.subscribe)
-                        },
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                AnimatedVisibility(visible = isSubscribed) {
-                    Icon(
-                        imageVector = Icons.Rounded.KeyboardArrowDown,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
-            }
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.width(200.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.notifications),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-            HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.surfaceVariant)
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.on)) },
-                leadingIcon = { Icon(Icons.Rounded.NotificationsActive, null) },
-                onClick = {
-                    onNotificationChange(true)
-                    expanded = false
-                },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.off)) },
-                leadingIcon = { Icon(Icons.Rounded.NotificationsOff, null) },
-                onClick = {
-                    onNotificationChange(false)
-                    expanded = false
-                },
-            )
-            HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.surfaceVariant)
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.unsubscribe)) },
-                leadingIcon = { Icon(Icons.Rounded.PersonRemove, null) },
-                onClick = {
-                    onUnsubscribeClick()
-                    expanded = false
-                },
-            )
-        }
-    }
-}
-
-// Tab row
 @Composable
 private fun ChannelTabRow(
     selectedIndex: Int,

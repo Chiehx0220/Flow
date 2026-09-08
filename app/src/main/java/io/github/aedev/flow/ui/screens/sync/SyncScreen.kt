@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -42,7 +43,16 @@ import io.github.aedev.flow.sync.protocol.SyncRole
 import io.github.aedev.flow.ui.components.layout.topbar.FlowTopBar
 
 /** Where the user is in the pre-session setup. Once a session starts, [SyncState] drives the UI. */
-private enum class Step { CHOOSER, SEND_SELECT, SEND_TRANSPORT, SEND_SCAN, RECEIVE_TRANSPORT, RECEIVE_SCAN }
+private enum class Step {
+    CHOOSER,
+    SEND_SELECT,
+    SEND_TRANSPORT,
+    SEND_SCAN,
+    SEND_MANUAL,
+    RECEIVE_TRANSPORT,
+    RECEIVE_SCAN,
+    RECEIVE_MANUAL,
+}
 
 /** The step to return to, or null when there is nothing left to back out of but the screen itself. */
 private fun Step.previous(): Step? =
@@ -51,8 +61,10 @@ private fun Step.previous(): Step? =
         Step.SEND_SELECT -> Step.CHOOSER
         Step.SEND_TRANSPORT -> Step.SEND_SELECT
         Step.SEND_SCAN -> Step.SEND_TRANSPORT
+        Step.SEND_MANUAL -> Step.SEND_TRANSPORT
         Step.RECEIVE_TRANSPORT -> Step.CHOOSER
         Step.RECEIVE_SCAN -> Step.RECEIVE_TRANSPORT
+        Step.RECEIVE_MANUAL -> Step.RECEIVE_TRANSPORT
     }
 
 @Composable
@@ -62,6 +74,7 @@ private fun Step.title(): String =
         Step.SEND_SELECT -> stringResource(R.string.sync_choose_what_to_send)
         Step.SEND_TRANSPORT, Step.RECEIVE_TRANSPORT -> stringResource(R.string.sync_step_title_pair)
         Step.SEND_SCAN, Step.RECEIVE_SCAN -> stringResource(R.string.sync_step_title_scan)
+        Step.SEND_MANUAL, Step.RECEIVE_MANUAL -> stringResource(R.string.sync_step_title_manual)
     }
 
 /** Identifies the visible step for the cross-fade, without the volatile parts of the state. */
@@ -149,6 +162,7 @@ fun SyncScreen(
                 Modifier
                     .fillMaxSize()
                     .padding(padding)
+                    .imePadding()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -176,6 +190,7 @@ fun SyncScreen(
                         onSelectedChange = { selected = it },
                         onHost = { role -> viewModel.host(role, selected.toList()) },
                         onJoin = { role, qr -> viewModel.join(role, qr, selected.toList()) },
+                        onPrepareConnectionData = viewModel::extendPairingForManualShare,
                         onCancel = {
                             viewModel.cancel()
                             step = Step.CHOOSER
@@ -203,6 +218,7 @@ private fun SyncStepContent(
     onSelectedChange: (Set<String>) -> Unit,
     onHost: (SyncRole) -> Unit,
     onJoin: (SyncRole, String) -> Unit,
+    onPrepareConnectionData: () -> String?,
     onCancel: () -> Unit,
     onConfirmSas: (Boolean) -> Unit,
     onConfirmConsent: (Boolean) -> Unit,
@@ -230,7 +246,11 @@ private fun SyncStepContent(
         }
 
         is SyncState.ShowingQr -> {
-            SyncQrContent(state, onCancel = onCancel)
+            SyncQrContent(
+                s = state,
+                onPrepareConnectionData = onPrepareConnectionData,
+                onCancel = onCancel,
+            )
         }
 
         is SyncState.AwaitingSas -> {
@@ -291,6 +311,7 @@ private fun SyncSetupStep(
                 scanHint = stringResource(R.string.sync_send_scan_hint),
                 onShowQr = { onHost(SyncRole.SENDER) },
                 onScan = { onStepChange(Step.SEND_SCAN) },
+                onManual = { onStepChange(Step.SEND_MANUAL) },
             )
         }
 
@@ -298,6 +319,12 @@ private fun SyncSetupStep(
             SyncScanContent(
                 prompt = stringResource(R.string.sync_scan_prompt_receive_code),
                 onScanned = { onJoin(SyncRole.SENDER, it) },
+            )
+        }
+
+        Step.SEND_MANUAL -> {
+            SyncManualEntryContent(
+                onSubmit = { onJoin(SyncRole.SENDER, it) },
             )
         }
 
@@ -309,6 +336,7 @@ private fun SyncSetupStep(
                 scanHint = stringResource(R.string.sync_receive_show_qr_hint),
                 onShowQr = { onStepChange(Step.RECEIVE_SCAN) },
                 onScan = { onHost(SyncRole.RECEIVER) },
+                onManual = { onStepChange(Step.RECEIVE_MANUAL) },
             )
         }
 
@@ -316,6 +344,12 @@ private fun SyncSetupStep(
             SyncScanContent(
                 prompt = stringResource(R.string.sync_scan_prompt_send_code),
                 onScanned = { onJoin(SyncRole.RECEIVER, it) },
+            )
+        }
+
+        Step.RECEIVE_MANUAL -> {
+            SyncManualEntryContent(
+                onSubmit = { onJoin(SyncRole.RECEIVER, it) },
             )
         }
     }

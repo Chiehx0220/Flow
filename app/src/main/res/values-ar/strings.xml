@@ -34,7 +34,7 @@
     <string name="play">لعب</string>
     <string name="next">التالي</string>
     <string name="repeat">تكرار</string>
-    <string name="loading_track">تحميل المقطع...</string>
+    <string name="loading_track">تحميل المقطع…</string>
     <string name="error_occurred">خطأ</string>
     <string name="autoplay">التشغيل التلقائي</string>
     <string name="move_up">تحرك للأعلي</string>
@@ -105,7 +105,7 @@
     <string name="playlist">قائمة التشغيل</string>
     <string name="personalized_feed">خلاصتك المخصصة</string>
     <string name="import_newpipe_backup">إسترداد نسخة إحتياطية من NewPipe</string>
-    <string name="importing_from_backup">إسترداد الإشتراكات من NewPipe...</string>
+    <string name="importing_from_backup">إسترداد الإشتراكات من NewPipe…</string>
     <string name="search_subscriptions">بحث الإشتراكات</string>
     <string name="toggle_view_mode">تفعيل وضع العرض</string>
     <string name="unsubscribed_from_template">إلغاء الإشتراك من %1$s</string>
@@ -115,7 +115,7 @@
     <string name="no_videos_saved">لا يوجد فديوهات محفوظه</string>
     <string name="no_videos_saved_body">الفيديوهات المحفوظة للمشاهدة لاحقا ستظهر هنا</string>
     <string name="search_hint">البحث</string>
-    <string name="search_videos_channels_placeholder">بحث الفيديوهات، القنوات...</string>
+    <string name="search_videos_channels_placeholder">بحث الفيديوهات، القنوات…</string>
     <string name="recent_searches">البحث السابق</string>
     <string name="trending">رائج</string>
     <string name="channels_header">القنوات</string>
@@ -168,7 +168,7 @@
     <string name="settings_reset_brain_title">إعادة ضبط طابع Flow؟</string>
     <string name="settings_reset_brain_body">سيقوم هذا بمحو ملف اهتماماتك الخاص ب Flow\' Brain\'\n\n• جميع المواضيع المتعلمة سيتم نسيانها.\n• السمات الشخصية سترجع للوضع الطبيعي.\n• سترجع جميع الإقتراحات للوضع الإفتراضي.\n\nهذه الخطوة لا يمكن التراجع عنها.</string>
     <string name="settings_reset_everything">إعادة ضبط الجميع</string>
-    <string name="settings_analyzing_interactions">تحليل تفاعلاتك...</string>
+    <string name="settings_analyzing_interactions">تحليل تفاعلاتك…</string>
     <string name="settings_view_analytics">عرض التحليلات</string>
     <string name="settings_header_appearance">المظهر</string>
     <string name="settings_header_content_playback">المحتوي و التشغيل</string>
@@ -319,7 +319,7 @@
     <string name="content_settings_related_card_compact_desc">الصورة المصغرة و المعلومات جنبًا إلى جنب</string>
     <string name="content_settings_related_card_full_width">عرض كامل</string>
     <string name="content_settings_related_card_full_width_desc">صورة مصغرة كبيرة مع العنوان أسفله</string>
-    <string name="subscriptions_search_placeholder">ابحث في اشتركاتك...</string>
+    <string name="subscriptions_search_placeholder">ابحث في اشتركاتك…</string>
     <string name="empty_subscriptions_body">اشترك بالقنوات لترى\nأحدث مقاطعهم هنا</string>
     <string name="shorts">شورتز</string>
     <string name="subscribers">المشتركون</string>
@@ -352,7 +352,7 @@
         <item quantity="other">%d قنوات</item>
     </plurals>
     <string name="cd_delete_download">احذف %1$s</string>
-    <string name="save_to">أضف إلى...</string>
+    <string name="save_to">أضف إلى…</string>
     <string name="watch_later">المشاهدة لاحقا</string>
     <string name="playlist_private">خاص</string>
     <string name="playlist_public">عام</string>
@@ -378,7 +378,7 @@
     <string name="settings_subs_shorts_shelf_title">رف الفيديوهات القصيرة في تبويب الإشتراكات</string>
     <string name="settings_subs_shorts_shelf_subtitle">اعرض رفّ الفيديوهات القصيرة الأفقية في شبكة تغذية الاشتراكات.</string>
     <string name="settings_shorts_nav_tab_title">علامة تبويب \"الفيديوهات القصيرة\" في شريط التنقل</string>
-    <string name="settings_shorts_nav_tab_subtitle">اعرض علامة تبويب \"الفيديوهات القصيرة\" في شريط التنقل السفلي.</string>
+    <string name="settings_shorts_nav_tab_subtitle">اعرض تبويب \"الفيديوهات القصيرة\" في شريط التنقل السفلي.</string>
     <string name="settings_music_nav_tab_title">علامة تبويب الموسيقى في شريط التنقل</string>
     <string name="settings_music_nav_tab_subtitle">اعرض علامة تبويب الموسيقى في شريط التنقل السفلي.</string>
     <string name="settings_search_nav_tab_title">علامة تبويب البحث في شريط التنقل</string>
@@ -679,7 +679,7 @@
     <string name="whats_new_in_flow">ما الجديد في Flow</string>
     <string name="about_device_info">معلومات الجهاز</string>
     <string name="gnu_license_full_title">رخصة GNU General Public</string>
-    <string name="loading_ellipsis">تحميل...</string>
+    <string name="loading_ellipsis">تحميل…</string>
     <string name="error_license_load">تعذر تحميل ملف الترخيص.</string>
     <string name="no_changelog_found_message">لا يوجد سجل للتغييرات.</string>
     <string name="error_changelog_load">تعذر تحميل ملف سجل التغييرات.</string>
@@ -707,7 +707,7 @@
     <string name="saved_playlists_header">قوائم التشغيل المحفوظة</string>
     <string name="create_playlist_empty_desc">أنشئ قائمة تشغيلك الأولى لتنظيم مقاطع الفيديو المفضلة لديك</string>
     <string name="my_playlist_placeholder">قائمة التشغيل الخاصة بي</string>
-    <string name="add_description_placeholder">إضافة وصف...</string>
+    <string name="add_description_placeholder">إضافة وصف…</string>
     <string name="edit_playlist_action">تعديل قائمة التشغيل</string>
     <string name="delete_playlist_action">حذف قائمة التشغيل</string>
     <string name="make_public_action">عامة</string>
@@ -736,7 +736,7 @@
     <string name="category_news_current_events">الأخبار و الأحداث الجارية</string>
     <string name="flow_control_center">مركز تحكم Flow</string>
     <string name="action_refresh">إعادة التحميل</string>
-    <string name="loading_neural_matrix">جار تحميل دماغ المحتوى...</string>
+    <string name="loading_neural_matrix">جار تحميل دماغ المحتوى…</string>
     <string name="neural_interest_map_subtitle">خريطة إهتماماتك العصبية</string>
     <string name="cognitive_fingerprint">البصمة المعرفية</string>
     <string name="content_dna_subtitle">الحمض النووي للمحتوى الخاص بك</string>
@@ -784,7 +784,7 @@
     <string name="label_playlist_name">اسم قائمة التشغيل</string>
     <string name="placeholder_playlist_name">قائمة التشغيل الرائعة الخاصة بي</string>
     <string name="label_description_optional">الوصف (اختياري)</string>
-    <string name="placeholder_playlist_desc">المفضلة...</string>
+    <string name="placeholder_playlist_desc">المفضلة…</string>
     <string name="action_create">إنشاء</string>
     <string name="action_cancel">إلغاء</string>
     <string name="title_add_to_playlist">أضف إلى قائمة التشغيل</string>
@@ -794,7 +794,7 @@
     <string name="action_add_to_favorites">أضف إلى المفضلة</string>
     <string name="action_listen_now">استمع الآن</string>
     <string name="action_play_all">تشغيل الكل</string>
-    <string name="loading_music">جارٍ تحميل الموسيقى...</string>
+    <string name="loading_music">جارٍ تحميل الموسيقى…</string>
     <string name="screen_title_music">الموسيقى</string>
     <string name="section_listen_again">استمع مجددا</string>
     <string name="section_quick_picks">اختيارات سريعة</string>
@@ -881,7 +881,7 @@
     <string name="download_video">تحميل الفيديو</string>
     <string name="select_quality">اختر الجودة المفضلة لديك</string>
     <string name="no_download_streams">لا توجد قنوات تنزيل متاحة</string>
-    <string name="downloading_template">جار تحميل %1$s...</string>
+    <string name="downloading_template">جار تحميل %1$s…</string>
     <string name="section_downloading">جار التحميل</string>
     <string name="section_completed">مكتمل</string>
     <string name="download_status_queued">في قائمة الانتظار</string>
@@ -1673,7 +1673,7 @@
     <string name="player_settings_ambient_mode">وضع Ambient</string>
     <string name="player_settings_ambient_mode_subtitle">إملأ الأشرطة المحيطة بالفيديو بتوهج ناعم من ألوانه</string>
     <string name="player_appearance_shorts_ui_title">واجهة مشغل Shorts</string>
-    <string name="player_appearance_shorts_ui_subtitle">إختر مقدار الجزء المرئي من طبقة ال Shorts</string>
+    <string name="player_appearance_shorts_ui_subtitle">إختر مقدار الجزء المرئي من طبقة الـ Shorts</string>
     <string name="shorts_player_ui_default">إفتراضي</string>
     <string name="shorts_player_ui_simple">بسيط</string>
     <string name="shorts_player_ui_impressive">مُبهر</string>
@@ -1860,13 +1860,13 @@
     <string name="logs_copy_failed">تعذر نسخ السجلات</string>
     <string name="channel_error_log_clip_label">سجل أخطاء قناة Flow</string>
     <string name="channel_search_failed">تعذر البحث في هذه القناة</string>
-    <string name="add_comment_placeholder">كتابة تعليق...</string>
+    <string name="add_comment_placeholder">كتابة تعليق…</string>
     <string name="search_empty_prompt">إبحث عن مقاطع الفيديو، الموسيقى والمزيد</string>
     <string name="audio_track_number_template">%1$s %2$d</string>
     <string name="subtitle_auto_generated_template">%1$s (%2$s)</string>
     <string name="dlna_cast_to_device">البث إلى جهاز</string>
     <string name="dlna_no_devices">لم يتم العثور على أي مُشغّلات DLNA/UPnP على هذه الشبكة.\n\nتأكد من أن جهاز التلفاز أو مشغل الوسائط (VLC، Kodi، إلخ) متصل بنفس شبكة Wi-Fi وأن وضع مُشغّل الوسائط مُفعّل.</string>
-    <string name="dlna_searching">البحث عن أجهزة DLNA...</string>
+    <string name="dlna_searching">البحث عن أجهزة DLNA…</string>
     <string name="dlna_now_casting">يتم الأن بث: %1$s</string>
     <string name="dlna_stop_casting">إيقاف البث</string>
     <string name="subtitle_customization_title">تخصيص الترجمة</string>
@@ -2444,10 +2444,9 @@
         <item quantity="other">%1$d سمة</item>
     </plurals>
     <plurals name="lyrics_providers_enabled">
-        <item quantity="zero">تم تفعيل %1$d / %2$d موفر خدمة</item>
         <item quantity="one">تم تفعيل %1$d / %2$d موفر خدمة</item>
         <item quantity="two">تم تفعيل %1$d / %2$d موفر خدمة</item>
-        <item quantity="few">تم تفعيل %1$d / %2$d موفر خدمة</item>
+        <item quantity="few">تم تفعيل %1$d / %2$d موفري خدمة</item>
         <item quantity="many">تم تفعيل %1$d / %2$d موفر خدمة</item>
         <item quantity="other">تم تفعيل %1$d / %2$d موفر خدمة</item>
     </plurals>
@@ -2834,4 +2833,19 @@
     <string name="file_size_kb">%1$s KB</string>
     <string name="file_size_mb">%1$s MB</string>
     <string name="file_size_gb">%1$s GB</string>
+    <string name="section_artists_for_you">فنانون مقترحون لك</string>
+    <string name="music_content_language_title">لغة المحتوى</string>
+    <string name="music_content_language_follow_app">اتباع لغة التطبيق</string>
+    <string name="music_content_language_dialog_title">اختر لغة المحتوى</string>
+    <string name="music_content_country_title">بلد المحتوى</string>
+    <string name="music_normalize_volume_title">توحيد مستوى الصوت</string>
+    <string name="music_normalize_volume_desc">ضبط مستوى صوت جميع المقاطع وفق معيار YouTube Music</string>
+    <string name="section_other_versions">إصدارات أخرى</string>
+    <string name="section_charts_in">قوائم %1$s</string>
+    <string name="section_deep_cuts">أعمال غير شائعة</string>
+    <string name="section_charts_global">القوائم العالمية</string>
+    <string name="section_top_artists_in">أفضل الفنانين في %1$s</string>
+    <string name="section_top_artists_global">أفضل الفنانين عالميًا</string>
+    <string name="section_other_performances">عروض أخرى</string>
+    <string name="section_more_from">المزيد من</string>
 </resources>
