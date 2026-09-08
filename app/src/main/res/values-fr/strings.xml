@@ -2165,7 +2165,7 @@
     <string name="error_all_stream_sources_failed">Impossible de lire cette vidéo. Toutes les sources de diffusion ont renvoyé des erreurs.</string>
     <string name="error_remote_playback">Erreur de lecture à distance. Veuillez réessayer.</string>
     <string name="error_playback_permission_denied">Autorisation de lecture refusée. Veuillez réessayer.</string>
-    <string name="download_muxing_incompatible">L\'opération de multiplexage a échoué : le format audio est incompatible avec le conteneur vidéo. Veuillez réessayer le téléchargement.</string>
+    <string name="download_muxing_incompatible">L\'opération de multiplexage a échoué : le format audio est incompatible avec le conteneur vidéo. Veuillez réessayer le téléchargement.</string>
     <string name="download_muxing_failed_retry">Le multiplexage a échoué — essayez de télécharger à nouveau.</string>
     <string name="download_url_expired">URL expirée (403). Une nouvelle requête est nécessaire.</string>
     <string name="download_sabr_failed">Échec du téléchargement SABR</string>
