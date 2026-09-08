@@ -1,0 +1,175 @@
+package org.schabi.newpipe.localserver
+
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.net.wifi.WifiManager
+import android.os.Build
+import android.os.IBinder
+import android.os.PowerManager
+import androidx.core.app.NotificationCompat
+
+import java.net.Inet4Address
+import java.net.InetAddress
+import java.net.NetworkInterface
+
+/**
+ * Holds the foreground promotion + notification for the embedded local web server. The extractor
+ * is assumed already initialized by the host app's own startup (see FlowApplication) — this
+ * service deliberately does not call NewPipe.init() itself, since that sets process-global state
+ * shared with the app's own native extraction pipeline and re-initializing it here would race
+ * against / clobber that.
+ */
+class ServerService : Service() {
+
+    private var server: LocalHttpServer? = null
+    private var wakeLock: PowerManager.WakeLock? = null
+    private var wifiLock: WifiManager.WifiLock? = null
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (!isRunning) {
+            startServer()
+        }
+        return START_NOT_STICKY
+    }
+
+    private fun startServer() {
+        HtmlRenderer.lightColors = DynamicColorHelper.getThemeColors(this, false)
+        HtmlRenderer.darkColors = DynamicColorHelper.getThemeColors(this, true)
+
+        ensureChannel()
+        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+        val pendingIntent = launchIntent?.let {
+            PendingIntent.getActivity(
+                this, 0, it,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+        }
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(NOTIFICATION_TITLE)
+            .setContentText("Listening on: $localAddress")
+            .setSmallIcon(android.R.drawable.stat_sys_upload)
+            .setContentIntent(pendingIntent)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
+
+        try {
+            val newServer = LocalHttpServer(this, PORT)
+            server = newServer
+            newServer.startServer()
+            isRunning = true
+
+            try {
+                val pm = getSystemService(POWER_SERVICE) as PowerManager?
+                if (pm != null && wakeLock?.isHeld != true) {
+                    wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FlowLocalServer::WakeLock").apply { acquire() }
+                }
+                val wm = applicationContext.getSystemService(WIFI_SERVICE) as WifiManager?
+                if (wm != null && wifiLock?.isHeld != true) {
+                    wifiLock = wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "FlowLocalServer::WifiLock").apply { acquire() }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            LocalHttpServer.log("Local server running at: $localAddress")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            LocalHttpServer.setLogListener(null)
+            stopSelf()
+        }
+    }
+
+    private fun stopServer() {
+        wakeLock?.let { if (it.isHeld) runCatching { it.release() } }
+        wifiLock?.let { if (it.isHeld) runCatching { it.release() } }
+        server?.stopServer()
+        server = null
+        isRunning = false
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+    }
+
+    override fun onDestroy() {
+        stopServer()
+        super.onDestroy()
+    }
+
+    private fun ensureChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val manager = getSystemService(NotificationManager::class.java)
+            if (manager.getNotificationChannel(CHANNEL_ID) == null) {
+                val channel = NotificationChannel(CHANNEL_ID, "Local web server", NotificationManager.IMPORTANCE_LOW)
+                channel.setSound(null, null)
+                channel.enableVibration(false)
+                channel.setShowBadge(false)
+                manager.createNotificationChannel(channel)
+            }
+        }
+    }
+
+    val localAddress: String
+        get() {
+            val localIp = getLocalIpAddress()
+            return if (localIp != null) "http://$localIp:$PORT" else "http://127.0.0.1:$PORT"
+        }
+
+    companion object {
+        private const val CHANNEL_ID = "flow_local_server"
+        private const val NOTIFICATION_ID = 4097
+        private const val NOTIFICATION_TITLE = "Local server running"
+        const val PORT = 8080
+
+        @Volatile
+        var isRunning = false
+            private set
+
+        fun start(context: Context) {
+            val intent = Intent(context, ServerService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+        }
+
+        fun stop(context: Context) {
+            context.stopService(Intent(context, ServerService::class.java))
+        }
+
+        @JvmStatic
+        fun getLocalIpAddress(): String? {
+            try {
+                val interfaces = NetworkInterface.getNetworkInterfaces()
+                while (interfaces.hasMoreElements()) {
+                    val intf = interfaces.nextElement()
+                    val addresses = intf.inetAddresses
+                    while (addresses.hasMoreElements()) {
+                        val inetAddress: InetAddress = addresses.nextElement()
+                        if (!inetAddress.isLoopbackAddress && inetAddress is Inet4Address) {
+                            return inetAddress.hostAddress
+                        }
+                    }
+                }
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
+            return null
+        }
+    }
+}
