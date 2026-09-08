@@ -2492,4 +2492,20 @@
     <string name="music_content_language_title">Lingua dei contenuti</string>
     <string name="music_content_language_follow_app">Segui la lingua dell\'app</string>
     <string name="music_content_language_dialog_title">Seleziona lingua dei contenuti</string>
+    <string name="subscriptions_failed_channels_copy_logs">Copia log</string>
+    <string name="content_settings_channel_group_badge_title">Mostra gruppo negli avatar del canale</string>
+    <string name="content_settings_channel_group_badge_subtitle">Etichetta gli avatar di canali e artisti con il gruppo di iscrizione di cui fanno parte</string>
+    <string name="channel_add_to_group">Aggiungi a un gruppo</string>
+    <string name="channel_groups_sheet_title">Gruppi di canale</string>
+    <string name="channel_groups_empty">Nessun gruppo presente</string>
+    <string name="music_content_country_title">Paese dei contenuti</string>
+    <string name="music_normalize_volume_title">Normalizza il volume</string>
+    <string name="music_normalize_volume_desc">Regola il volume di ogni traccia al target di YouTube Music</string>
+    <string name="section_other_versions">Altre versioni</string>
+    <string name="music_persona_maturity_warming">Riscaldamento</string>
+    <string name="music_metric_total_plays_detail">50%+ di ascolti</string>
+    <string name="music_metric_artists_detail">con gusto appreso</string>
+    <string name="music_metric_tracks">Tracce monitorate</string>
+    <string name="music_metric_on_repeat">In ripetizione</string>
+    <string name="music_top_artists_title">Migliori artisti</string>
 </resources>
