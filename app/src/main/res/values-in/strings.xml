@@ -443,7 +443,7 @@
     <string name="player_appearance_style_subtitle">Pilih gaya visual bilah putar</string>
     <string name="settings_item_player_appearance">Tampilan Pemutar</string>
     <string name="settings_item_player_appearance_subtitle">Sesuaikan gaya bilah progres</string>
-    <string name="style_default">Reguler</string>
+    <string name="style_default">Ekspresif</string>
     <string name="style_metrolist">Tebal</string>
     <string name="style_metrolist_slim">Bawaan</string>
     <string name="style_squiggly">Berlekuk</string>
@@ -1692,11 +1692,11 @@
     <string name="sync_show_qr_here">Tampilkan kode QR di sini</string>
     <string name="sync_scan_other_qr">Pindai QR perangkat lain</string>
     <string name="sync_send_show_qr_hint">Perangkat lain memindainya. Gunakan ini jika perangkat lain memiliki kamera.</string>
-    <string name="sync_send_scan_hint">Gunakan ini untuk mengirim ke perangkat tanpa kamera (mis. desktop) yang sedang menampilkan kode penerimaan.</string>
-    <string name="sync_receive_scan_hint">Gunakan ini jika perangkat ini memiliki kamera dan perangkat lain sedang menampilkan kode pengiriman.</string>
-    <string name="sync_receive_show_qr_hint">Pengirim memindainya. Gunakan ini jika perangkat ini tidak memiliki kamera atau Anda lebih memilih menampilkan kode.</string>
-    <string name="sync_scan_prompt_receive_code">Arahkan kamera ke kode penerimaan perangkat lain</string>
-    <string name="sync_scan_prompt_send_code">Arahkan kamera ke kode pengiriman perangkat lain</string>
+    <string name="sync_send_scan_hint">Gunakan ini untuk mengirim ke perangkat tanpa kamera, misalnya desktop, yang menampilkan kode QR penerima.</string>
+    <string name="sync_receive_scan_hint">Gunakan ini jika perangkat ini memiliki kamera dan perangkat lain menampilkan kode QR pengirim.</string>
+    <string name="sync_receive_show_qr_hint">Pengirim memindainya. Gunakan ini jika perangkat ini tidak memiliki kamera atau Anda lebih memilih menampilkan kode QR.</string>
+    <string name="sync_scan_prompt_receive_code">Arahkan kamera ke kode QR penerima pada perangkat lain</string>
+    <string name="sync_scan_prompt_send_code">Arahkan kamera ke kode QR pengirim pada perangkat lain</string>
     <string name="sync_camera_permission_rationale">Izin kamera diperlukan untuk memindai kode QR.</string>
     <string name="sync_grant_camera">Berikan akses kamera</string>
     <string name="sync_choose_what_to_send">Pilih yang akan dikirim</string>
@@ -1707,8 +1707,8 @@
     <string name="sync_confirmation_code">Kode konfirmasi: %1$s</string>
     <string name="sync_expires_in">Kedaluwarsa dalam %1$ds</string>
     <string name="sync_qr_network_note">Kedua perangkat harus berada di Wi-Fi yang sama (atau hotspot salah satu perangkat). Anda mungkin perlu mengizinkan Flow melewati firewall.</string>
-    <string name="sync_sas_title">Apakah kodenya cocok?</string>
-    <string name="sync_sas_body">Pastikan kode 6 digit ini identik di kedua perangkat sebelum melanjutkan.</string>
+    <string name="sync_sas_title">Apakah kode verifikasi cocok?</string>
+    <string name="sync_sas_body">Pastikan kode verifikasi 6 digit ini sama pada kedua perangkat sebelum melanjutkan.</string>
     <string name="sync_sas_differ">Berbeda</string>
     <string name="sync_sas_match">Cocok</string>
     <string name="sync_consent_title">Gabungkan data yang masuk?</string>
@@ -1726,12 +1726,12 @@
     <string name="sync_try_again">Coba lagi</string>
     <string name="sync_qr_content_description">Kode QR sinkronisasi</string>
     <string name="sync_error_no_network">Tidak ada koneksi Wi-Fi/LAN. Hubungkan kedua perangkat ke jaringan yang sama atau ke hotspot.</string>
-    <string name="sync_error_peer_also_send">Perangkat lain juga disetel ke Kirim. Setel ke Terima, lalu pindai lagi.</string>
-    <string name="sync_error_peer_also_receive">Perangkat lain juga disetel ke Terima. Setel ke Kirim, lalu pindai lagi.</string>
-    <string name="sync_error_qr_expired">Kode QR ini telah kedaluwarsa. Minta perangkat lain menampilkan yang baru.</string>
+    <string name="sync_error_peer_also_send">Perangkat lain juga diatur ke mode Kirim. Atur ke mode Terima, lalu coba lagi.</string>
+    <string name="sync_error_peer_also_receive">Perangkat lain juga diatur ke mode Terima. Atur ke mode Kirim, lalu coba lagi.</string>
+    <string name="sync_error_qr_expired">Sesi pemasangan ini telah kedaluwarsa. Minta perangkat lain membuat sesi baru.</string>
     <string name="sync_error_qr_wrong_version">Versi aplikasi di perangkat lain tidak kompatibel.</string>
-    <string name="sync_error_qr_not_flow">Itu tampaknya bukan kode sinkronisasi Flow.</string>
-    <string name="sync_error_qr_bad_address">Kode sinkronisasi tidak memiliki alamat jaringan yang valid.</string>
+    <string name="sync_error_qr_not_flow">Data koneksi Flow tersebut tampaknya tidak valid.</string>
+    <string name="sync_error_qr_bad_address">Data koneksi tidak memiliki alamat jaringan yang valid.</string>
     <string name="subscriptions_sort_label">Urutkan channel</string>
     <string name="subscriptions_sort_default">Default</string>
     <string name="subscriptions_sort_name">Nama (A–Z)</string>
@@ -2284,8 +2284,8 @@
     <string name="sync_step_title_send">Kirim</string>
     <string name="sync_step_title_receive">Terima</string>
     <string name="sync_step_title_pair">Pasangkan perangkat</string>
-    <string name="sync_step_title_scan">Pindai kode</string>
-    <string name="sync_step_title_code">Kode Anda</string>
+    <string name="sync_step_title_scan">Pindai kode QR</string>
+    <string name="sync_step_title_code">Hubungkan perangkat</string>
     <string name="sync_step_title_verify">Verifikasi</string>
     <string name="sync_step_title_merge">Gabungkan</string>
     <string name="sync_step_title_syncing">Menyelaraskan</string>
@@ -2301,10 +2301,10 @@
     <string name="sync_collection_recommendation_profile_body">Apa yang telah dipelajari Flow tentang apa yang Anda tonton.</string>
     <string name="sync_waiting_for_peer">Menunggu perangkat lain terhubung…</string>
     <string name="sync_cancel_session">Batalkan sinkronisasi</string>
-    <string name="sync_expires_label">Kode kedaluwarsa</string>
+    <string name="sync_expires_label">Kode QR kedaluwarsa</string>
     <string name="sync_expires_seconds">%1$ds</string>
     <string name="sync_done_stats_summary">%1$d ditambahkan · %2$d diperbarui · %3$d dilewati</string>
-    <string name="sync_scanning_hint">Tahan kode perangkat lain di dalam bingkai.</string>
+    <string name="sync_scanning_hint">Posisikan kode QR perangkat lain di dalam bingkai.</string>
     <string name="player_brightness_auto">Otomatis</string>
     <string name="player_gesture_level_percent">%1$d%%</string>
     <string name="player_replay">Putar Ulang</string>
@@ -2325,4 +2325,334 @@
     <string name="duration_hours_minutes">%1$d jam %2$d mnt</string>
     <string name="duration_hours_short">%1$dh</string>
     <string name="duration_minutes_short">%1$dm</string>
+    <string name="top_bar_clear_search">Hapus pencarian</string>
+    <string name="top_bar_close_search">Tutup pencarian</string>
+    <plurals name="subscriptions_refresh_progress_template">
+        <item quantity="other">Menyegarkan %1$d dari %2$d saluran</item>
+    </plurals>
+    <plurals name="subscriptions_last_refreshed_template">
+        <item quantity="other">Terakhir disegarkan %1$s, %2$d video diperiksa</item>
+    </plurals>
+    <string name="subscriptions_failed_channels_copy_logs">Salin log</string>
+    <string name="content_settings_channel_group_badge_title">Tampilkan grup pada avatar saluran</string>
+    <string name="content_settings_channel_group_badge_subtitle">Beri label pada avatar saluran dan artis dengan grup langganan yang diikutinya</string>
+    <string name="channel_add_to_group">Tambahkan ke grup</string>
+    <string name="channel_groups_sheet_title">Grup saluran</string>
+    <string name="channel_groups_empty">Belum ada grup</string>
+    <string name="conjunction_and">dan</string>
+    <string name="streamed_date_template">Disiarkan %1$s</string>
+    <plurals name="download_all_confirmation">
+        <item quantity="other">Unduh semua %1$d video? Ini mungkin menggunakan ruang penyimpanan yang besar.</item>
+    </plurals>
+    <string name="lyrics_save_file">Simpan sebagai file .lrc</string>
+    <plurals name="queue_track_count">
+        <item quantity="other">%1$d trek</item>
+    </plurals>
+    <string name="lyrics_saved">Lirik disimpan</string>
+    <string name="lyrics_save_failed">Lirik tidak dapat disimpan</string>
+    <string name="lyrics_choose_source">Pilih sumber lirik</string>
+    <string name="lyrics_synced_badge">Tersinkronisasi</string>
+    <string name="lyrics_edit">Edit lirik</string>
+    <string name="lyrics_copy">Salin lirik</string>
+    <string name="lyrics_copied">Lirik disalin</string>
+    <string name="lyrics_alignment">Perataan</string>
+    <string name="lyrics_align_left">Rata kiri</string>
+    <string name="lyrics_align_center">Rata tengah</string>
+    <string name="lyrics_align_right">Rata kanan</string>
+    <string name="lyrics_adjust_sync">Sesuaikan offset sinkronisasi</string>
+    <string name="lyrics_sync_offset_value">%1$ss</string>
+    <string name="lyrics_sync_reset">Atur ulang waktu lirik</string>
+    <string name="lyrics_searching_sources">Mencari sumber…</string>
+    <string name="lyrics_no_sources_found">Tidak ditemukan lirik dari sumber mana pun</string>
+    <string name="lyrics_source_edited">Diedit</string>
+    <string name="lyrics_current_source">Sumber saat ini: %1$s</string>
+    <string name="lyrics_display_header">Tampilan</string>
+    <string name="explicit_badge">E</string>
+    <plurals name="view_replies_template">
+        <item quantity="other">Lihat %1$d balasan</item>
+    </plurals>
+    <plurals name="videos_curated_template">
+        <item quantity="other">%1$d video yang dikurasi khusus untuk Anda</item>
+    </plurals>
+    <plurals name="videos_count_template">
+        <item quantity="other">%1$d video</item>
+    </plurals>
+    <plurals name="songs_count_template">
+        <item quantity="other">%1$d lagu</item>
+    </plurals>
+    <string name="metadata_separator">·</string>
+    <string name="player_time_separator">/</string>
+    <string name="you">Anda</string>
+    <string name="search_voice_prompt">Ucapkan kata kunci pencarian…</string>
+    <string name="shared_video">Video Dibagikan</string>
+    <string name="search_failed">Pencarian gagal</string>
+    <string name="loading_more">Memuat lebih banyak…</string>
+    <string name="load_failed">Gagal memuat</string>
+    <string name="import_success_count">Mengimpor %1$d %2$s</string>
+    <string name="import_success">%1$s berhasil diimpor</string>
+    <plurals name="deep_flow_duration_hours">
+        <item quantity="other">%1$d jam</item>
+    </plurals>
+    <plurals name="appearance_themes_count_all">
+        <item quantity="other">%1$d tema</item>
+    </plurals>
+    <string name="player_background_style_immersive">Karya Seni Imersif</string>
+    <string name="style_thick">Tebal</string>
+    <string name="style_compact">Ringkas</string>
+    <string name="style_wavy">Bergelombang</string>
+    <plurals name="lyrics_providers_enabled">
+        <item quantity="other">%1$d / %2$d penyedia diaktifkan</item>
+    </plurals>
+    <plurals name="player_settings_shorts_playback_mode_auto_interval_summary">
+        <item quantity="other">Gulir otomatis setiap %1$d detik</item>
+    </plurals>
+    <plurals name="player_settings_shorts_auto_scroll_seconds_template">
+        <item quantity="other">%1$d detik</item>
+    </plurals>
+    <plurals name="player_settings_autoplay_countdown_seconds_template">
+        <item quantity="other">%1$d detik</item>
+    </plurals>
+    <string name="player_settings_video_codec_fallback">Codec Cadangan</string>
+    <string name="player_settings_video_codec_fallback_auto">Otomatis</string>
+    <string name="player_settings_video_codec_fallback_dialog_body">Codec yang digunakan ketika video tidak tersedia dalam codec pilihan Anda. Otomatis akan menggunakan codec yang dianggap paling kompatibel oleh aplikasi, yang biasanya H.264.</string>
+    <string name="player_settings_video_codec_fallback_auto_desc">Biarkan aplikasi memilih, dengan preferensi H.264</string>
+    <plurals name="player_settings_double_tap_seek_subtitle">
+        <item quantity="other">%1$d detik per sisi untuk ketuk dua kali</item>
+    </plurals>
+    <plurals name="topics_count_template">
+        <item quantity="other">%1$d topik</item>
+    </plurals>
+    <plurals name="topics_blocked_count_plural">
+        <item quantity="other">%1$d topik</item>
+    </plurals>
+    <plurals name="selected_count_template">
+        <item quantity="other">%1$d dipilih</item>
+    </plurals>
+    <plurals name="every_min_template">
+        <item quantity="other">Setiap %1$d menit</item>
+    </plurals>
+    <plurals name="every_minutes_template">
+        <item quantity="other">Setiap %1$d menit</item>
+    </plurals>
+    <plurals name="sleep_timer_minutes">
+        <item quantity="other">%1$d menit</item>
+    </plurals>
+    <plurals name="currently_searches_template">
+        <item quantity="other">Saat ini: %1$d pencarian</item>
+    </plurals>
+    <plurals name="delete_after_days_template">
+        <item quantity="other">Hapus setelah %1$d hari</item>
+    </plurals>
+    <plurals name="delete_older_than_template">
+        <item quantity="other">Hapus pencarian yang lebih lama dari %1$d hari</item>
+    </plurals>
+    <plurals name="searches_count_template">
+        <item quantity="other">%1$d pencarian</item>
+    </plurals>
+    <plurals name="days_count_template">
+        <item quantity="other">%1$d hari</item>
+    </plurals>
+    <string name="import_label_newpipe_subscriptions">Langganan NewPipe</string>
+    <string name="import_label_youtube_subscriptions">Langganan YouTube</string>
+    <string name="import_label_youtube_watch_history">Riwayat tontonan YouTube</string>
+    <string name="import_label_freetube_watch_history">Riwayat tontonan FreeTube</string>
+    <string name="import_label_newpipe_watch_history">Riwayat tontonan NewPipe</string>
+    <string name="import_label_libretube_subscriptions">Langganan LibreTube</string>
+    <string name="import_label_metrolist_playlists">Daftar putar musik Metrolist</string>
+    <string name="import_label_newpipe_playlists">Daftar putar NewPipe</string>
+    <string name="import_label_libretube_playlists">Daftar putar LibreTube</string>
+    <string name="import_label_youtube_takeout">YouTube Takeout</string>
+    <string name="import_yt_watch_later">Impor Tonton Nanti</string>
+    <string name="import_yt_watch_later_desc">Impor CSV YouTube Takeout langsung ke daftar Tonton Nanti Anda, apa pun nama filenya.</string>
+    <plurals name="import_yt_playlist_success_template">
+        <item quantity="other">Daftar putar “%1$s” dengan %2$d video berhasil diimpor</item>
+    </plurals>
+    <plurals name="threads_per_download_template">
+        <item quantity="other">%1$d utas per unduhan</item>
+    </plurals>
+    <plurals name="threads_count_label">
+        <item quantity="other">%1$d utas</item>
+    </plurals>
+    <string name="playlist_downloading_template">Mengunduh: %1$s</string>
+    <string name="playlist_downloads_queued">%1$d/%2$d unduhan masuk antrean</string>
+    <string name="playlist_download_queue_empty">Tidak dapat mengantrekan unduhan apa pun dari daftar putar ini</string>
+    <plurals name="remove_selected_videos_title">
+        <item quantity="other">Hapus %1$d video?</item>
+    </plurals>
+    <plurals name="onboarding_channels_added_count">
+        <item quantity="other">%1$d saluran ditambahkan</item>
+    </plurals>
+    <string name="onboarding_step_interests">Minat</string>
+    <string name="onboarding_step_channels">Saluran</string>
+    <string name="onboarding_step_import">Impor</string>
+    <string name="onboarding_imported_count">Mengimpor %1$d %2$s</string>
+    <string name="onboarding_imported">%1$s diimpor</string>
+    <string name="queue_position_template">%1$d / %2$d</string>
+    <string name="chart_position_template">#%1$d</string>
+    <string name="next_up_template">%1$s: %2$s</string>
+    <string name="equalizer_frequency_label">F</string>
+    <string name="equalizer_gain_label">G</string>
+    <string name="equalizer_q_label">Q</string>
+    <string name="section_on_repeat">Diputar Berulang</string>
+    <string name="section_daily_mix_title">Mix %1$s</string>
+    <string name="section_daily_mix_label">Mix Harian</string>
+    <string name="daily_mix_page_description">Dibuat dari artis yang Anda dengarkan secara bersamaan. Simpan untuk mempertahankan mix hari ini.</string>
+    <string name="section_rediscover">Temukan Kembali</string>
+    <string name="section_deep_cuts">Lagu-lagu kurang populer</string>
+    <string name="section_artists_for_you">Artis untuk Anda</string>
+    <string name="section_from_artists_you_love">Dari artis yang Anda sukai</string>
+    <string name="section_your_history">Riwayat Anda</string>
+    <string name="artist_insights_played_times">Diputar %1$d kali</string>
+    <string name="artist_insights_liked">Disukai</string>
+    <string name="artist_known_related_badge">Dalam rotasi Anda</string>
+    <string name="section_rotation_morning">Rotasi pagi Anda</string>
+    <string name="section_rotation_afternoon">Rotasi siang Anda</string>
+    <string name="section_rotation_evening">Rotasi malam Anda</string>
+    <string name="section_rotation_night">Rotasi larut malam Anda</string>
+    <string name="source_your_rotation">Rotasi Anda</string>
+    <string name="music_genre_affinity_title">Genre dan suasana hati</string>
+    <string name="music_genre_affinity_subtitle">Dipelajari dari genre dan suasana hati yang benar-benar Anda putar</string>
+    <string name="recommendations_header">Rekomendasi</string>
+    <string name="not_interested_desc">Tampilkan lebih sedikit dari artis ini untuk sementara waktu</string>
+    <string name="dont_recommend_artist">Jangan rekomendasikan %1$s</string>
+    <string name="dont_recommend_artist_desc">Jangan pernah sarankan artis ini lagi</string>
+    <string name="feedback_not_interested_applied">Anda akan melihat lebih sedikit %1$s</string>
+    <string name="feedback_artist_blocked">%1$s tidak akan direkomendasikan lagi</string>
+    <string name="music_prefs_section_title">Rekomendasi musik</string>
+    <string name="music_endless_radio_title">Radio tanpa akhir</string>
+    <string name="music_endless_radio_desc">Lanjutkan antrean dengan lagu-lagu serupa saat antrean habis</string>
+    <string name="music_content_language_title">Bahasa konten</string>
+    <string name="music_content_language_follow_app">Ikuti bahasa aplikasi</string>
+    <string name="music_content_language_dialog_title">Pilih bahasa konten</string>
+    <string name="music_content_country_title">Negara konten</string>
+    <string name="music_normalize_volume_title">Normalisasi volume</string>
+    <string name="music_normalize_volume_desc">Samakan tingkat volume setiap trek dengan target kenyaringan YouTube Music</string>
+    <string name="section_other_versions">Versi lain</string>
+    <string name="music_blocked_artists_title">Artis yang diblokir</string>
+    <string name="music_blocked_artists_empty">Tidak ada artis yang diblokir</string>
+    <string name="music_unblock">Batalkan pemblokiran</string>
+    <string name="export_music_brain_title">Ekspor Data Mesin Musik</string>
+    <string name="export_music_brain_desc">Simpan profil selera musik Anda sebagai file JSON</string>
+    <string name="import_music_brain_title">Impor Data Mesin Musik</string>
+    <string name="import_music_brain_desc">Pulihkan profil selera musik dari file JSON</string>
+    <string name="music_brain_export_success">Data mesin musik berhasil diekspor</string>
+    <string name="music_brain_export_failed">Ekspor data mesin musik gagal</string>
+    <string name="music_brain_import_success">Data mesin musik berhasil diimpor</string>
+    <string name="music_brain_import_failed">Impor mesin musik gagal</string>
+    <string name="music_persona_overview_title">Selera Musik</string>
+    <string name="music_persona_overview_subtitle">Hal yang telah dipelajari mesin musik dari kebiasaan mendengarkan Anda</string>
+    <string name="music_persona_maturity_cold">Tahap awal</string>
+    <string name="music_persona_maturity_warming">Sedang mempelajari</string>
+    <string name="music_persona_maturity_mature">Matang</string>
+    <string name="music_metric_total_plays">Pemutaran yang dihitung</string>
+    <string name="music_metric_total_plays_detail">Dengarkan 50%+</string>
+    <string name="music_metric_artists">Artis</string>
+    <string name="music_metric_artists_detail">dengan selera yang telah dipelajari</string>
+    <string name="music_metric_tracks">Trek yang dilacak</string>
+    <string name="music_metric_tracks_detail">riwayat pemutaran berulang</string>
+    <string name="music_metric_on_repeat">Sering Diputar</string>
+    <string name="music_metric_on_repeat_detail">sedang populer saat ini</string>
+    <string name="music_discovery_appetite">Minat terhadap penemuan</string>
+    <string name="music_discovery_appetite_detail">Seberapa banyak musik baru yang dicampurkan oleh mesin</string>
+    <string name="music_top_artists_title">Artis Teratas</string>
+    <string name="music_top_artists_subtitle">Preferensi terkuat Anda saat ini</string>
+    <string name="music_top_artist_plays">%1$d pemutaran</string>
+    <string name="music_listening_patterns_title">Pola Mendengarkan</string>
+    <string name="music_listening_patterns_subtitle">Waktu Anda benar-benar mendengarkan berdasarkan stempel waktu pemutaran</string>
+    <string name="music_bucket_weekday_morning">Pagi hari kerja</string>
+    <string name="music_bucket_weekday_afternoon">Siang hari kerja</string>
+    <string name="music_bucket_weekday_evening">Sore hari kerja</string>
+    <string name="music_bucket_weekday_night">Malam hari kerja</string>
+    <string name="music_bucket_weekend_morning">Pagi akhir pekan</string>
+    <string name="music_bucket_weekend_afternoon">Siang akhir pekan</string>
+    <string name="music_bucket_weekend_evening">Sore akhir pekan</string>
+    <string name="music_bucket_weekend_night">Malam akhir pekan</string>
+    <string name="music_bucket_plays">%1$d pemutaran</string>
+    <string name="music_blocked_artists_subtitle">Artis yang tidak akan pernah direkomendasikan oleh mesin</string>
+    <string name="music_persona_empty">Putar musik dan mesin akan mulai mempelajari preferensi Anda</string>
+    <string name="section_charts_in">Tangga lagu di %1$s</string>
+    <string name="section_charts_global">Tangga lagu global</string>
+    <string name="section_top_artists_in">Artis teratas di %1$s</string>
+    <string name="section_top_artists_global">Artis teratas di seluruh dunia</string>
+    <string name="section_other_performances">Performa lainnya</string>
+    <string name="section_more_from">Lainnya dari</string>
+    <plurals name="favorites_count_template">
+        <item quantity="other">%1$d trek favorit</item>
+    </plurals>
+    <string name="audio_format_unknown">Audio</string>
+    <string name="download_size_estimate_mb">~%1$s MB</string>
+    <string name="download_size_estimate_gb">~%1$s GB</string>
+    <string name="download_progress_percent">%1$d%%</string>
+    <string name="download_status_paused_template">"%1$d%% -  %2$s"</string>
+    <string name="file_size_kb">%1$s KB</string>
+    <string name="file_size_mb">%1$s MB</string>
+    <string name="file_size_gb">%1$s GB</string>
+    <string name="removed_from_history">Dihapus dari riwayat</string>
+    <string name="removed_from_likes">Dihapus dari suka</string>
+    <string name="delete_download_dialog_title">Hapus unduhan?</string>
+    <string name="delete_download_dialog_text">%1$s akan dihapus dari perangkat ini.</string>
+    <string name="library_empty_title">Pustaka Anda kosong</string>
+    <string name="library_empty_body">Video dan musik yang Anda tonton, sukai, simpan, atau unduh akan terkumpul di sini.</string>
+    <string name="playlist_load_failed">Playlist ini tidak dapat dimuat</string>
+    <string name="library_settings_subtitle">Pemutaran, unduhan, tampilan, dan data</string>
+    <plurals name="remove_incomplete_downloads_message">
+        <item quantity="other">Hapus %1$d unduhan yang dijeda, gagal, atau tidak lengkap? Unduhan yang telah selesai tidak akan dihapus.</item>
+    </plurals>
+    <string name="sync_collection_music_profile">Profil selera musik</string>
+    <string name="sync_enter_connection_data">Masukkan data koneksi secara manual</string>
+    <string name="sync_enter_connection_data_hint">Tempelkan data koneksi yang disalin dari perangkat lain jika pemindaian tidak memungkinkan.</string>
+    <string name="sync_connection_data_label">Data koneksi</string>
+    <string name="sync_paste_connection_data">Tempel data koneksi</string>
+    <string name="sync_connection_data_security_note">Data koneksi berisi kunci enkripsi sementara. Bagikan hanya kepada perangkat yang ingin Anda sinkronkan.</string>
+    <string name="sync_copy_connection_data">Salin data koneksi</string>
+    <string name="sync_connect">Hubungkan</string>
+    <string name="sync_verification_after_connect">Setelah terhubung, bandingkan kode verifikasi yang ditampilkan pada kedua perangkat sebelum melanjutkan.</string>
+    <string name="sync_step_title_manual">Masukkan data koneksi</string>
+    <plurals name="sync_selected_count">
+        <item quantity="other">%1$d dari %2$d dipilih</item>
+    </plurals>
+    <string name="sync_collection_music_profile_body">Hal yang telah dipelajari Flow tentang apa yang Anda dengarkan.</string>
+    <string name="diagnostics_report_subject">Laporan Diagnostik Flow</string>
+    <plurals name="merge_playlist_success">
+        <item quantity="other">Menambahkan %1$d lagu ke “%2$s”</item>
+    </plurals>
+    <plurals name="taste_topic_breadth_detail">
+        <item quantity="other">%1$d topik dalam vektor global</item>
+    </plurals>
+    <string name="widget_on_repeat_label">Sering Diputar</string>
+    <string name="widget_on_repeat">Sering Diputar</string>
+    <string name="widget_on_repeat_description">Lagu yang terus Anda putar kembali</string>
+    <string name="widget_no_on_repeat">Lagu yang sering Anda putar ulang akan muncul di sini</string>
+    <plurals name="ui_downloading_videos">
+        <item quantity="other">Mengunduh %1$d video…</item>
+    </plurals>
+    <string name="subtitle_load_failed">Subtitle %1$s tidak dapat dimuat, coba lagi</string>
+    <plurals name="toast_downloaded_tracks_from_playlist">
+        <item quantity="other">Mengunduh %1$d trek dari %2$s</item>
+    </plurals>
+    <plurals name="toast_downloaded_tracks">
+        <item quantity="other">Mengunduh %1$d trek</item>
+    </plurals>
+    <string name="notification_channel_downloads_name">Unduhan Flow</string>
+    <string name="notification_download_paused">"Dijeda -  %1$s"</string>
+    <string name="notification_download_paused_hint">ketuk untuk melanjutkan</string>
+    <string name="notification_download_progress">"%1$d%% -  %2$s / %3$s"</string>
+    <plurals name="notification_downloads_active">
+        <item quantity="other">Mengunduh %1$d item</item>
+    </plurals>
+    <plurals name="notification_downloads_paused">
+        <item quantity="other">%1$d unduhan dijeda</item>
+    </plurals>
+    <plurals name="notification_new_videos_from_subscriptions">
+        <item quantity="other">%1$d video baru dari langganan Anda</item>
+    </plurals>
+    <string name="download_stream_blocked_403">Streaming diblokir atau kedaluwarsa (HTTP 403). Coba kualitas atau codec lain, atau coba lagi nanti.</string>
+    <string name="imported_playlist_fallback">Playlist yang Diimpor</string>
+    <plurals name="duration_minutes">
+        <item quantity="other">%1$d menit</item>
+    </plurals>
+    <string name="duration_hours_minutes_short">%1$d j %2$d m</string>
+    <string name="storage_size_gb">%1$.1f GB</string>
+    <string name="duration_hours_decimal">%1$.1f j</string>
+    <string name="music_search_no_results">Tidak ada hasil untuk \"%1$s\"</string>
 </resources>

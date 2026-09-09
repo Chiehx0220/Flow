@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Flow</string>
-    <string name="subscriptions_search_placeholder">Abonnements durchsuchen...</string>
+    <string name="subscriptions_search_placeholder">Abonnements durchsuchen ...</string>
     <string name="top_bar_subscriptions_title">Abonnements</string>
     <string name="view_all_button_label">Alle</string>
     <string name="subscribed">Abonniert</string>
@@ -404,7 +404,7 @@
     <string name="player_appearance_style_subtitle">Wählen Sie den Stil des Musik-Fortschrittsbalkens</string>
     <string name="settings_item_player_appearance">Player-Erscheinungsbild</string>
     <string name="settings_item_player_appearance_subtitle">Anpassen des Fortschrittsbalkenstils</string>
-    <string name="style_default">Regulär</string>
+    <string name="style_default">Expressiv</string>
     <string name="style_metrolist">Dick</string>
     <string name="style_metrolist_slim">Standard</string>
     <string name="style_squiggly">Verschnörkelt</string>
@@ -1197,7 +1197,7 @@
     <string name="section_moods_and_genres">Stimmungen &amp; Genres</string>
     <string name="section_mood_and_genres">Stimmungen und Genres</string>
     <string name="section_from_the_community">Von der Community</string>
-    <string name="genre_mix_template">%1$s mix</string>
+    <string name="genre_mix_template">%1$s Mix</string>
     <string name="similar_to">Ähnlich zu</string>
     <string name="section_similar_to">Ähnlich zu %1$s</string>
     <string name="audio_settings_title">Audio Einstellungen</string>
@@ -1564,7 +1564,7 @@
     <string name="action_view_all">Alle anzeigen</string>
     <string name="empty_moods_genres">Keine Stimmungen und Genres verfügbar</string>
     <string name="section_popular_artists">Aktuelle Künstler</string>
-    <string name="section_mixed_for_you">Speziell für dich zusammengestellt</string>
+    <string name="section_mixed_for_you">Speziell für Sie zusammengestellt</string>
     <string name="daily_discover_subtitle">Aktuelle Empfehlungen basierend auf deinem Hörverhalten</string>
     <string name="section_top_albums">Top-Alben</string>
     <string name="subtitle_similar_to">Basierend auf Ihrem Hörverlauf</string>
@@ -1645,8 +1645,8 @@
     <string name="sync_intro">Synchronisieren Sie Ihre Bibliothek, Ihren Verlauf, Ihre Likes, Ihre Einstellungen und Ihr Empfehlungsprofil über Ihr lokales WLAN mit einem anderen Gerät. Es verlassen keine Daten Ihr Netzwerk.</string>
     <string name="sync_scan_other_qr">Scannen Sie den QR-Code mit dem anderen Gerät</string>
     <string name="sync_send_show_qr_hint">Das andere Gerät scannt es. Verwenden Sie diese Option, wenn das andere Gerät über eine Kamera verfügt.</string>
-    <string name="sync_send_scan_hint">Verwenden Sie diese Option, um Daten an ein Gerät ohne Kamera (z. B. einen Desktop-Computer) zu senden, auf dem ein Empfangs-Code angezeigt wird.</string>
-    <string name="sync_receive_scan_hint">Verwenden Sie diese Option, wenn dieses Gerät über eine Kamera verfügt und auf dem anderen Gerät ein Sendecode angezeigt wird.</string>
+    <string name="sync_send_scan_hint">Verwenden Sie diese Option, um Daten an ein Gerät ohne Kamera (z. B. einen Desktop-Computer) zu senden, auf dem ein QR-Code angezeigt wird.</string>
+    <string name="sync_receive_scan_hint">Verwenden Sie diese Option, wenn dieses Gerät über eine Kamera verfügt und auf dem anderen Gerät ein sende QR-Code angezeigt wird.</string>
     <string name="playlist_filter_owned">Im Besitz</string>
     <string name="notif_background_restricted_title">Hintergrund Prüfungen sind beschränkt</string>
     <string name="notif_background_restricted_subtitle">Android verbietet Flow im Hintergrund nach neuen Videos zu suchen, dadurch kommen Benachrichtigungen erst nach öffnen der App. Klicke hier um uneingeschränkte Hintergrundaktivitäten zuzulassen</string>
@@ -1667,4 +1667,10 @@
     <string name="auto_backup_last_run">Letztes Backup: %s</string>
     <string name="auto_backup_last_run_label">Letztes Backup</string>
     <string name="auto_backup_never_run">Noch kein Backup</string>
+    <string name="section_daily_mix_title">%1$s Mix</string>
+    <string name="section_daily_mix_label">Täglicher Mix</string>
+    <string name="daily_mix_page_description">Zusammengestellt aus Künstlern, die ihr gemeinsam hört. Speichere ihn, um den heutigen Mix zu behalten.</string>
+    <string name="music_discovery_appetite_detail">Wie viel neue Musik der Algorithmus hinzufügt</string>
+    <string name="diagnostics_tab_session">Sitzungsprotokolle</string>
+    <string name="diagnostics_no_crashes">Keine Absturzberichte – super!</string>
 </resources>

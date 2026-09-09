@@ -5,7 +5,7 @@
     <string name="top_bar_subscriptions_title">Підписки</string>
     <string name="view_all_button_label">Всі</string>
     <string name="subscribed">Підписано</string>
-    <string name="empty_subscriptions_body">Підпишіться на канали, щоби бачити їхні\nнові відео тут</string>
+    <string name="empty_subscriptions_body">Підпишіться на канали, щоби бачити їхні нові відео тут</string>
     <string name="home_refresh_feed">Оновити стрічку</string>
     <string name="retry">Повторити спробу</string>
     <string name="shorts">Shorts</string>
@@ -2523,4 +2523,97 @@
     <string name="import_label_freetube_watch_history">Історія переглядів FreeTube</string>
     <string name="import_label_newpipe_watch_history">Історія переглядів NewPipe</string>
     <string name="import_label_libretube_subscriptions">Підписки LibreTube</string>
+    <string name="import_label_metrolist_playlists">Музичні списки відтворення Metrolist</string>
+    <string name="import_label_newpipe_playlists">Списки відтворення NewPipe</string>
+    <string name="import_label_libretube_playlists">Списки відтворення LibreTube</string>
+    <string name="import_label_youtube_takeout">YouTube Takeout</string>
+    <string name="import_yt_watch_later">Імпортувати «Переглянути пізніше»</string>
+    <string name="import_yt_watch_later_desc">Імпортуйте CSV-файл із YouTube Takeout прямо у свій список «Переглянути пізніше», незалежно від назви файлу.</string>
+    <plurals name="import_yt_playlist_success_template">
+        <item quantity="one">Імпортовано список відтворення «%1$s» з %2$d відео</item>
+        <item quantity="few">Імпортовано список відтворення «%1$s» з %2$d відео</item>
+        <item quantity="many">Імпортовано список відтворення «%1$s» з %2$d відео</item>
+        <item quantity="other">Імпортовано список відтворення «%1$s» з %2$d відео</item>
+    </plurals>
+    <plurals name="threads_per_download_template">
+        <item quantity="one">%1$d потік на завантаження</item>
+        <item quantity="few">%1$d потоки на завантаження</item>
+        <item quantity="many">%1$d потоків на завантаження</item>
+        <item quantity="other">%1$d потоків на завантаження</item>
+    </plurals>
+    <plurals name="threads_count_label">
+        <item quantity="one">%1$d потік</item>
+        <item quantity="few">%1$d потоки</item>
+        <item quantity="many">%1$d потоків</item>
+        <item quantity="other">%1$d потоків</item>
+    </plurals>
+    <string name="playlist_downloading_template">Завантаження: %1$s</string>
+    <string name="playlist_downloads_queued">У черзі %1$d / %2$d завантажень</string>
+    <string name="playlist_download_queue_empty">Не вдалося поставити в чергу жодного завантаження з цього списку відтворення</string>
+    <string name="subscriptions_failed_channels_copy_logs">Копіювати журнали</string>
+    <string name="content_settings_channel_group_badge_title">Показувати групу на аватарах каналів</string>
+    <string name="content_settings_channel_group_badge_subtitle">Позначайте аватари каналів та виконавців назвою групи підписок, до якої вони належать</string>
+    <string name="channel_add_to_group">Додати в групу</string>
+    <string name="channel_groups_sheet_title">Групи каналів</string>
+    <string name="channel_groups_empty">Поки немає груп</string>
+    <string name="lyrics_sync_reset">Скинути синхронізацію тексту</string>
+    <string name="lyrics_searching_sources">Пошук джерел…</string>
+    <string name="lyrics_no_sources_found">Не вдалося знайти слова пісні в жодному з джерел</string>
+    <string name="lyrics_source_edited">Редаговано</string>
+    <string name="lyrics_current_source">Поточне джерело: %1$s</string>
+    <string name="lyrics_display_header">Екран</string>
+    <string name="explicit_badge">E</string>
+    <plurals name="view_replies_template">
+        <item quantity="one">Переглянути %1$d відповідь</item>
+        <item quantity="few">Переглянути %1$d відповіді</item>
+        <item quantity="many">Переглянути %1$d відповідей</item>
+        <item quantity="other">Переглянути %1$d відповідей</item>
+    </plurals>
+    <plurals name="videos_curated_template">
+        <item quantity="one">%1$d відео, обране саме для вас</item>
+        <item quantity="few">%1$d відео, обрані саме для вас</item>
+        <item quantity="many">%1$d відео, обраних саме для вас</item>
+        <item quantity="other">%1$d відео, обраних саме для вас</item>
+    </plurals>
+    <plurals name="videos_count_template">
+        <item quantity="one">%1$d відео</item>
+        <item quantity="few">%1$d відео</item>
+        <item quantity="many">%1$d відео</item>
+        <item quantity="other">%1$d відео</item>
+    </plurals>
+    <plurals name="songs_count_template">
+        <item quantity="one">%1$d пісня</item>
+        <item quantity="few">%1$d пісні</item>
+        <item quantity="many">%1$d пісень</item>
+        <item quantity="other">%1$d пісень</item>
+    </plurals>
+    <string name="metadata_separator">·</string>
+    <string name="player_time_separator">/</string>
+    <string name="you">Ви</string>
+    <string name="search_voice_prompt">Говоріть, щоб знайти…</string>
+    <string name="shared_video">Поширене відео</string>
+    <string name="search_failed">Не вдалося знайти</string>
+    <string name="loading_more">Завантажуємо ще…</string>
+    <string name="load_failed">Не вдалося завантажити</string>
+    <string name="import_success_count">Імпортовано%1$d %2$s</string>
+    <plurals name="remove_selected_videos_title">
+        <item quantity="one">Видалити %1$d відео?</item>
+        <item quantity="few">Видалити %1$d відео?</item>
+        <item quantity="many">Видалити %1$d відео?</item>
+        <item quantity="other">Видалити %1$d відео?</item>
+    </plurals>
+    <plurals name="onboarding_channels_added_count">
+        <item quantity="one">Додано %1$d канал</item>
+        <item quantity="few">Додано %1$d канали</item>
+        <item quantity="many">Додано %1$d каналів</item>
+        <item quantity="other">Додано %1$d каналів</item>
+    </plurals>
+    <string name="onboarding_step_interests">Інтереси</string>
+    <string name="onboarding_step_channels">Канали</string>
+    <string name="onboarding_step_import">Імпортувати</string>
+    <string name="onboarding_imported_count">Імпортовано %1$d %2$s</string>
+    <string name="onboarding_imported">%1$s імпортовано</string>
+    <string name="queue_position_template">%1$d / %2$d</string>
+    <string name="chart_position_template">#%1$d</string>
+    <string name="next_up_template">%1$s: %2$s</string>
 </resources>

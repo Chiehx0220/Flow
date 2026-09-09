@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Flow</string>
-    <string name="subscriptions_search_placeholder">Search subscriptions...</string>
+    <string name="subscriptions_search_placeholder">Search subscriptions ...</string>
     <string name="subscriptions_sort_label">Sort channels</string>
     <string name="subscriptions_sort_default">Default</string>
     <string name="subscriptions_sort_name">Name (A–Z)</string>
@@ -12,7 +12,7 @@
     <string name="view_all_button_label">All</string>
     <string name="subscribed">Subscribed</string>
     <string name="no_subscriptions_yet">No Subscriptions Yet</string>
-    <string name="empty_subscriptions_body">Subscribe to channels to see their\nlatest videos here</string>
+    <string name="empty_subscriptions_body">Subscribe to channels to see their latest videos here</string>
     <string name="home_refresh_feed">Refresh Feed</string>
     <plurals name="subscriptions_refresh_progress_template">
         <item quantity="one">Refreshing %1$d of %2$d channel</item>
@@ -819,6 +819,9 @@
     <string name="content_settings_header_home_layout">Home Layout</string>
     <string name="content_settings_home_layout_title">Home Display Mode</string>
     <string name="content_settings_home_layout_subtitle">Choose how videos are displayed on the home screen</string>
+    <string name="content_settings_home_columns_title">Cards per row</string>
+    <string name="content_settings_home_columns_subtitle">Auto follows your screen size. Pick a number to keep it fixed.</string>
+    <string name="content_settings_home_columns_auto">Auto</string>
     <string name="content_settings_layout_grid">Grid</string>
     <string name="content_settings_layout_list">List</string>
     <string name="content_settings_grid_size_title">Grid Item Size</string>
@@ -2328,7 +2331,7 @@
     <string name="taste_chart_profile">Profile</string>
     <string name="taste_chart_now">Now</string>
     <!-- Topic Evidence -->
-    <string name="topic_score_prefix"/>
+    <string name="topic_score_prefix">Score</string>
     <!-- Date & Time Display (#481) -->
     <string name="settings_item_datetime">Date &amp; Time</string>
     <string name="settings_item_datetime_subtitle">Customize how upload dates are shown</string>
@@ -2744,7 +2747,7 @@
     <string name="download_waiting_for_wifi">Waiting for WiFi</string>
     <string name="download_failed_try_again">Download failed. Please try again.</string>
     <string name="download_merging_audio_video">Merging audio &amp; video…</string>
-    <string name="download_muxing_incompatible">Muxing failed â€” audio format incompatible with video container. Try re-downloading.</string>
+    <string name="download_muxing_incompatible">Muxing failed - audio format incompatible with video container. Try re-downloading.</string>
     <string name="download_muxing_failed_retry">Muxing failed — try re-downloading.</string>
     <string name="download_url_expired">URL expired (403). Re-fetch needed.</string>
     <string name="download_stream_blocked_403">Stream blocked or expired (HTTP 403). Try another quality or codec, or try again later.</string>
