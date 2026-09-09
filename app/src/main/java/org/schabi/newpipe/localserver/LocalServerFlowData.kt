@@ -1,5 +1,6 @@
 package org.schabi.newpipe.localserver
 
+import io.github.aedev.flow.data.local.HomeFeedCacheFilters
 import io.github.aedev.flow.data.local.LikedVideoInfo
 import io.github.aedev.flow.data.local.LikedVideosRepository
 import io.github.aedev.flow.data.local.PlayerPreferences
@@ -9,10 +10,27 @@ import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.model.Video as FlowVideo
+import io.github.aedev.flow.data.model.toVideo
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.recommendation.InteractionType
+import io.github.aedev.flow.data.recommendation.UserBrain
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.shorts.ChannelReelIndex
+import io.github.aedev.flow.data.shorts.queue.SubscriptionDeepShortsLoader
+import io.github.aedev.flow.data.shorts.queue.SubscriptionShortsLoader
+import io.github.aedev.flow.player.PlayerRelatedVideosPolicy
+import io.github.aedev.flow.ui.screens.home.FeedTasteProfile
+import io.github.aedev.flow.ui.screens.home.GraphCandidate
+import io.github.aedev.flow.ui.screens.home.HomeFeedSources
+import io.github.aedev.flow.ui.screens.home.assembleHomeFeed
+import io.github.aedev.flow.ui.screens.home.buildHomeFeedLanes
+import io.github.aedev.flow.ui.screens.home.demoteByFit
+import io.github.aedev.flow.ui.screens.home.dynamicFreshSubSlots
+import io.github.aedev.flow.ui.screens.home.enrichAvatars
+import io.github.aedev.flow.ui.screens.home.feedTasteProfile
+import io.github.aedev.flow.ui.screens.home.filterValid
+import io.github.aedev.flow.ui.screens.home.filterWatched
+import io.github.aedev.flow.ui.screens.home.spaceByChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -359,15 +377,18 @@ fun HistoryDbHelper.nativeClearHistory() {
  * video-only [FlowVideo] display model.
  */
 
-// Singleton so its channelAvatarCache/videoAvatarStackCache LRU caches persist across requests.
-@Volatile
-private var youTubeRepositoryInstance: YouTubeRepository? = null
-
+// YouTubeRepository.getInstance() already does its own @Volatile/synchronized double-checked
+// caching internally - calling it directly here reaches the actual same instance the native app
+// uses (RepositoryModule.kt's Hilt @Provides calls this exact same factory), with no need for a
+// second caching layer on top of it.
 private fun HistoryDbHelper.youTubeRepository(): YouTubeRepository =
-    youTubeRepositoryInstance ?: synchronized(this) {
-        youTubeRepositoryInstance ?: YouTubeRepository(PlayerPreferences(appContext), ChannelReelIndex())
-            .also { youTubeRepositoryInstance = it }
-    }
+    YouTubeRepository.getInstance(PlayerPreferences(appContext), ChannelReelIndex())
+
+// HomeFeedSources is @Singleton-scoped in Hilt's graph (see its own doc-comment); reached via
+// LocalServerEntryPoint since this code runs outside Hilt. Hilt's own scoping already caches the
+// single instance, so no extra local caching layer is needed here.
+private fun HistoryDbHelper.homeFeedSources(): HomeFeedSources =
+    localServerEntryPoint(appContext).homeFeedSources()
 
 @Volatile
 private var flowNeuroInitialized = false
@@ -463,9 +484,35 @@ private suspend fun CoroutineScope.fetchDiscoveryVideos(repo: YouTubeRepository,
         }.awaitAll().flatten()
     }.getOrDefault(emptyList())
 
+/** Shared inputs both native-fusion home-feed builders need: watched-video gating (mirrors Flow's
+ * own `hideWatchedVideosFromHome` toggle), FlowNeuroEngine's block/suppress list, a brain snapshot
+ * + derived taste profile (duration/format-fit demotion), and subscribed-channel avatars (for
+ * videos that otherwise carry none). */
+private data class HomeFeedContext(
+    val watched: Set<String>,
+    val excludedChannels: Set<String>,
+    val brain: UserBrain,
+    val taste: FeedTasteProfile,
+    val subAvatarMap: Map<String, String>,
+)
+
+private suspend fun HistoryDbHelper.buildHomeFeedContext(): HomeFeedContext {
+    val hideWatched = playerPreferences().hideWatchedVideosFromHome.first()
+    val watched = if (hideWatched) viewHistory().getAllWatchedVideoIds() else emptySet()
+    val excludedChannels = runCatching { FlowNeuroEngine.getExcludedChannelIds() }.getOrDefault(emptySet())
+    val brain = runCatching { FlowNeuroEngine.getBrainSnapshot() }.getOrElse { UserBrain() }
+    val taste = feedTasteProfile(brain, FlowNeuroEngine.getPersona(brain))
+    val subAvatarMap = runCatching {
+        subscriptionRepository().getAllSubscriptions().first()
+            .filter { it.channelThumbnail.isNotEmpty() }
+            .associate { it.channelId to it.channelThumbnail }
+    }.getOrDefault(emptyMap())
+    return HomeFeedContext(watched, excludedChannels, brain, taste, subAvatarMap)
+}
+
 /** Dedupes by video id (first occurrence wins), ranks via FlowNeuroEngine (falls back to
- * unranked order on failure), converts to [StreamInfoItem]. Shared tail of [buildAndRankHomeFeed],
- * [continueDiscoveryFeed], and [buildShortsCandidates]. */
+ * unranked order on failure), converts to [StreamInfoItem]. Shared tail of
+ * [continueDiscoveryFeed] and [buildShortsCandidates]. */
 private suspend fun HistoryDbHelper.rankAndConvert(videos: List<FlowVideo>, serviceId: Int): List<StreamInfoItem> {
     val deduped = LinkedHashMap<String, FlowVideo>()
     for (v in videos) if (v.id.isNotBlank()) deduped.putIfAbsent(v.id, v)
@@ -478,10 +525,24 @@ private suspend fun HistoryDbHelper.rankAndConvert(videos: List<FlowVideo>, serv
 }
 
 /**
- * Assembles the home-feed candidate pool from Flow's own sources - trending kiosk, FlowNeuro
- * discovery queries, and (`feedMode == "mix"`) the subscription feed - then ranks via
- * FlowNeuroEngine. Skips HomeViewModel's quota/dedup/blending algorithm (Compose-state-coupled,
- * not directly callable); a simple id-dedup + `FlowNeuroEngine.rank()` substitutes.
+ * Assembles and ranks the home feed by calling the SAME pipeline Flow's native Home screen calls
+ * (`HomeViewModel`'s wave-1 wiring) - [buildHomeFeedLanes]/[assembleHomeFeed] from
+ * `io.github.aedev.flow.ui.screens.home`, both plain suspend functions with no Compose/DI coupling
+ * as of upstream's home-feed-pipeline refactor. An earlier version of this function believed that
+ * algorithm was Compose-state-coupled and substituted a simple id-dedup instead - it wasn't, and
+ * this now gets real parity: quota-balanced source blending, same-channel spacing, duration/format
+ * -fit demotion, fresh-upload pinning, and a related-video (/next graph) recommendation lane the
+ * old substitute had no equivalent of at all.
+ *
+ * `rssFeed`, `homeFeedSources()`'s related-video caches, and `youTubeRepository()`'s avatar caches
+ * all now come from the SAME app-wide Hilt singletons the native Home screen uses (via
+ * [localServerEntryPoint]/[YouTubeRepository.getInstance] instead of separately-constructed
+ * copies) - not a second, unshared set of instances.
+ *
+ * Deliberately still different from native, by choice:
+ * - No Bilibili (YouTube-only throughout Local Server).
+ * - No wave-2 enrichment / persistent feed cache / reserve page - those exist in HomeViewModel to
+ *   smooth a long-lived Compose screen, not a single request/response HTTP handler.
  *
  * Second value: whether [continueDiscoveryFeed] has more to fetch. No real NewPipeExtractor Page
  * involved - YouTube's trending kiosk has no continuation (`YoutubeTrendingExtractor` never sets
@@ -497,36 +558,93 @@ fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int, feedMode: String): Pair
 
     ensureFlowNeuroInitialized()
     val repo = youTubeRepository()
+    val sources = homeFeedSources()
+    val subIds = subscriptionRepository().getAllSubscriptionIds()
+    val context = buildHomeFeedContext()
+    val cacheFilters: suspend () -> HomeFeedCacheFilters = {
+        HomeFeedCacheFilters(
+            watchedVideoIds = context.watched,
+            suppressedVideoIds = context.brain.suppressedVideoIds.keys,
+            blockedChannelIds = context.brain.blockedChannels,
+            suppressedChannelIds = context.brain.suppressedChannels.keys,
+        )
+    }
 
-    // Dedup priority in rankAndConvert(): subs > discovery > trending.
-    val pool = mutableListOf<FlowVideo>()
+    lateinit var rawSubs: List<FlowVideo>
+    lateinit var rawDiscovery: List<FlowVideo>
+    lateinit var rawViral: List<FlowVideo>
+    lateinit var rawRelated: List<GraphCandidate>
+    lateinit var rssFeed: List<FlowVideo>
     supervisorScope {
-        val trendingDeferred = async { runCatching { repo.getTrendingVideos("").first }.getOrDefault(emptyList()) }
-        val discoveryDeferred = async { fetchDiscoveryVideos(repo, resetDepth = true) }
         val subsDeferred = async {
-            if (feedMode != "mix") return@async emptyList()
+            if (feedMode != "mix" || subIds.isEmpty()) return@async emptyList()
+            runCatching { repo.getSubscriptionFeed(subIds.toList()) }.getOrDefault(emptyList())
+        }
+        val discoveryDeferred = async { fetchDiscoveryVideos(repo, resetDepth = true) }
+        // "" region kept intentionally - getTrendingVideos() itself falls back to
+        // playerPreferences.trendingRegion when region is blank, so this already resolves to the
+        // exact same value the native app would pass explicitly. Not a gap, verified by reading
+        // YouTubeRepository.getTrendingVideos()'s own body.
+        val viralDeferred = async { runCatching { repo.getTrendingVideos("").first }.getOrDefault(emptyList()) }
+        val relatedDeferred = async {
             runCatching {
-                val subIds = subscriptionRepository().getAllSubscriptionIds()
-                if (subIds.isEmpty()) emptyList() else repo.getSubscriptionFeed(subIds.toList())
+                val seedInputs = sources.historySeedInputs()
+                val seedIds = FlowNeuroEngine.selectRelatedSeeds(seedInputs)
+                sources.fetchRelatedGraph(seedInputs, seedIds, cacheFilters).candidates
+            }.getOrDefault(emptyList())
+        }
+        // Same SubscriptionFeedRepository (RSS + Room cache) HomeViewModel reads for its "fresh
+        // uploads" lane, reached via LocalServerEntryPoint since this table is genuinely shared
+        // now rather than unreachable - just a cache read, no network call, but kept async/
+        // defensive for consistency with the other pools.
+        val rssDeferred = async {
+            runCatching {
+                localServerEntryPoint(appContext).subscriptionFeedRepository().observeFeed().first()
             }.getOrDefault(emptyList())
         }
 
-        pool += subsDeferred.await()
-        pool += discoveryDeferred.await()
-        pool += trendingDeferred.await()
+        rawSubs = subsDeferred.await()
+        rawDiscovery = discoveryDeferred.await()
+        rawViral = viralDeferred.await()
+        rawRelated = relatedDeferred.await()
+        rssFeed = rssDeferred.await()
     }
 
-    val result = rankAndConvert(pool, serviceId)
+    val lanes = buildHomeFeedLanes(
+        rawSubs = rawSubs,
+        rawDiscovery = rawDiscovery,
+        rawViral = rawViral,
+        rawRelated = rawRelated,
+        rssFeed = rssFeed,
+        watched = context.watched,
+        excludedChannels = context.excludedChannels,
+        taste = context.taste,
+        now = now,
+        freshSlotTarget = dynamicFreshSubSlots(subIds.size),
+        subAvatarMap = context.subAvatarMap,
+        rank = { pool -> runCatching { FlowNeuroEngine.rank(pool, subIds) }.getOrDefault(pool) },
+    )
+    val mix = assembleHomeFeed(
+        lanes = lanes,
+        onScreenIds = emptySet(),
+        subCount = subIds.size,
+        totalInteractions = context.brain.totalInteractions,
+    )
+
+    val result = mix.videos.map { it.toStreamInfoItem(serviceId) }
     if (result.isEmpty()) return@runBlocking emptyList<InfoItem>() to false
 
     homeFeedCache[cacheKey] = HomeFeedCacheEntry(result, now)
     result to true
 }
 
-/** `feedMode == "subs"` home feed - Flow's native subscription feed (same
- * `YouTubeRepository.getSubscriptionFeed()` lane [buildAndRankHomeFeed] uses for "mix"), ranked
- * via FlowNeuroEngine, cached the same way. Replaces the old executor-based scrape of up to 10
- * random subscribed channels (`fetchChannelUploads()`). */
+/** `feedMode == "subs"` home feed - Flow's native subscription pool, filtered/ranked/spaced using
+ * the SAME functions native Home uses per-lane (`filterValid`/`filterWatched`/`demoteByFit`/
+ * `spaceByChannel`), but NOT routed through the full [buildHomeFeedLanes]/[assembleHomeFeed] blend
+ * pipeline like [buildAndRankHomeFeed] is: that pipeline caps its subs lane at 15 ("bestSubs") and
+ * the whole mix at 40 (`HOME_TARGET_SIZE`), which would silently truncate what this mode is meant
+ * to be - an uncapped "just my subscriptions" feed. A deliberate narrower slice of the same
+ * native-fusion approach, not an oversight. */
 fun HistoryDbHelper.buildSubsOnlyFeed(serviceId: Int): List<InfoItem> = runBlocking {
     val cacheKey = "$serviceId:subs"
     val cached = homeFeedCache[cacheKey]
@@ -539,8 +657,19 @@ fun HistoryDbHelper.buildSubsOnlyFeed(serviceId: Int): List<InfoItem> = runBlock
     val subIds = subscriptionRepository().getAllSubscriptionIds()
     if (subIds.isEmpty()) return@runBlocking emptyList()
 
-    val videos = runCatching { youTubeRepository().getSubscriptionFeed(subIds.toList()) }.getOrDefault(emptyList())
-    val result = rankAndConvert(videos, serviceId)
+    val context = buildHomeFeedContext()
+    val rawSubs = runCatching { youTubeRepository().getSubscriptionFeed(subIds.toList()) }.getOrDefault(emptyList())
+    val pool = rawSubs
+        .filterValid()
+        .filterWatched(context.watched)
+        .filter { it.channelId.isBlank() || it.channelId !in context.excludedChannels }
+        .enrichAvatars(context.subAvatarMap)
+    if (pool.isEmpty()) return@runBlocking emptyList()
+
+    val ranked = runCatching { FlowNeuroEngine.rank(pool, subIds) }.getOrDefault(pool)
+    val spaced = spaceByChannel(demoteByFit(ranked, context.taste), gap = 1)
+
+    val result = spaced.map { it.toStreamInfoItem(serviceId) }
     homeFeedCache[cacheKey] = HomeFeedCacheEntry(result, now)
     result
 }
@@ -588,6 +717,41 @@ fun HistoryDbHelper.buildShortsCandidates(serviceId: Int): List<StreamInfoItem> 
     val result = rankAndConvert(pool, serviceId)
     shortsPoolCache[serviceId] = ShortsPoolCacheEntry(result, now)
     result
+}
+
+/** Subscription-based Shorts pool - two-tier, mirrors native's own ShortsQueueLoaderFactory:
+ * SubscriptionShortsLoader first (RSS-cache-only, no network call), then
+ * SubscriptionDeepShortsLoader (walks each channel's actual Shorts tab) as a supplement. Replaces
+ * the old random-channel "videos"-tab scrape in `buildAndScoreShortsPool()`'s Part 2, which wasn't
+ * even fetching the Shorts tab and let long-form uploads leak into the Shorts pool. One
+ * `.initial()` call per tier, not full pagination - this is a one-shot pool build for a single
+ * HTTP response, not an interactive infinite-scroll queue (matches the old Part 2's own "just 5
+ * channels" scope, just fetching the right tab this time). */
+fun HistoryDbHelper.buildSubscriptionShortsPool(serviceId: Int): List<StreamInfoItem> = runBlocking {
+    val entryPoint = localServerEntryPoint(appContext)
+    val feedRepo = entryPoint.subscriptionFeedRepository()
+    val watchedVideos = entryPoint.subscriptionWatchedVideos()
+    val prefs = playerPreferences()
+
+    val pool = LinkedHashMap<String, FlowVideo>()
+    supervisorScope {
+        val shallowDeferred = async {
+            runCatching {
+                SubscriptionShortsLoader(feedRepo, prefs, watchedVideos, anchorVideoId = null).initial().items
+            }.getOrDefault(emptyList())
+        }
+        val deepDeferred = async {
+            runCatching {
+                SubscriptionDeepShortsLoader(feedRepo, subscriptionRepository(), prefs, watchedVideos).initial().items
+            }.getOrDefault(emptyList())
+        }
+        (shallowDeferred.await() + deepDeferred.await()).forEach { short ->
+            val video = short.toVideo()
+            if (video.id.isNotBlank()) pool.putIfAbsent(video.id, video)
+        }
+    }
+
+    pool.values.map { it.toStreamInfoItem(serviceId) }
 }
 
 /** Real trending kiosk, unranked - used by handleApiHome()'s "raw" JSON feed (as opposed to
@@ -652,4 +816,29 @@ fun HistoryDbHelper.reportFlowNeuroInteraction(
     } catch (e: Exception) {
         LocalHttpServer.log("FlowNeuro interaction-signal error: " + e.message)
     }
+}
+
+/**
+ * Related videos for the watch page, filtered/deduped/backed-up the SAME way native's watch page
+ * does via `PlayerRelatedVideosPolicy` - never just the raw, unfiltered `StreamInfo.relatedItems`.
+ * `primary` is the extractor's own related list (no extra network call); when that sanitizes down
+ * to empty (self/blank/duplicate/short-filtered away, or genuinely sparse - common on live streams)
+ * it falls back to `getRelatedCandidates()`, native's InnerTube `/next` pull, only then - so a
+ * normal video with a healthy related list never pays for the extra network call.
+ */
+fun HistoryDbHelper.nativeRelatedVideos(info: StreamInfo, serviceId: Int): List<StreamInfoItem> {
+    val videoId = LocalHttpServer.getVideoId(info.url)
+    val repo = youTubeRepository()
+    val shortsEnabled = !nativeHideShorts()
+    val primary = repo.getRelatedVideosFromStreamInfo(info)
+    val sanitizedPrimary = PlayerRelatedVideosPolicy.sanitize(videoId, primary, shortsEnabled)
+    val selected = if (sanitizedPrimary.isNotEmpty()) {
+        sanitizedPrimary
+    } else {
+        val fallback = runBlocking {
+            runCatching { repo.getRelatedCandidates(videoId) }.getOrDefault(emptyList())
+        }
+        PlayerRelatedVideosPolicy.select(videoId, primary, fallback, current = emptyList(), shortsEnabled = shortsEnabled)
+    }
+    return selected.map { it.toStreamInfoItem(serviceId) }
 }

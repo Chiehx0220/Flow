@@ -382,7 +382,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         @JvmStatic
-        fun buildAndScoreShortsPool(serviceId: Int, dbHelper: HistoryDbHelper, executorService: ExecutorService): List<StreamInfoItem> {
+        fun buildAndScoreShortsPool(serviceId: Int, dbHelper: HistoryDbHelper): List<StreamInfoItem> {
             val pool = ArrayList<StreamInfoItem>()
             val watchedIds = HashSet<String>()
             try {
@@ -394,7 +394,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             }
 
             try {
-                val service = NewPipe.getService(serviceId)
                 val addedIds = HashSet<String>()
 
                 // Part 1: trending + FlowNeuro discovery, ranked - see buildShortsCandidates().
@@ -410,35 +409,19 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                     log("Shorts pool candidate fetch error: " + e.message)
                 }
 
-                // Part 2: Fetch from channel uploads (subscriptions)
-                val subscriptions = dbHelper.nativeSubscriptions()
-                if (!subscriptions.isEmpty()) {
-                    val selectedChannels = ArrayList(subscriptions)
-                    Collections.shuffle(selectedChannels)
-                    val limit = Math.min(5, selectedChannels.size)
-                    val futures = ArrayList<Future<List<InfoItem>>>()
-                    for (i in 0 until limit) {
-                        val url = selectedChannels[i].url
-                        futures.add(executorService.submit(Callable { fetchChannelUploads(service, url) }))
-                    }
-                    for (future in futures) {
-                        try {
-                            val res = future.get(6, TimeUnit.SECONDS)
-                            if (res != null) {
-                                for (itemObj in res) {
-                                    if (itemObj is StreamInfoItem) {
-                                        val vidId = getVideoId(itemObj.url)
-                                        if (!watchedIds.contains(vidId) && !addedIds.contains(vidId)) {
-                                            pool.add(itemObj)
-                                            addedIds.add(vidId)
-                                        }
-                                    }
-                                }
-                            }
-                        } catch (e: Exception) {
-                            log("Shorts pool channel uploads fetch error: " + e.message)
+                // Part 2: subscription Shorts, native two-tier queue (RSS cache + per-channel
+                // Shorts-tab walk) - see buildSubscriptionShortsPool(). Replaces the old
+                // random-channel "videos"-tab scrape, which wasn't even fetching the Shorts tab.
+                try {
+                    for (item in dbHelper.buildSubscriptionShortsPool(serviceId)) {
+                        val vidId = getVideoId(item.url)
+                        if (!watchedIds.contains(vidId) && !addedIds.contains(vidId)) {
+                            pool.add(item)
+                            addedIds.add(vidId)
                         }
                     }
+                } catch (e: Exception) {
+                    log("Shorts pool subscription fetch error: " + e.message)
                 }
 
                 // Shuffle the mixed feed
@@ -478,7 +461,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                         }
                     }
 
-                    newCandidates.addAll(buildAndScoreShortsPool(serviceId, dbHelper, executorService))
+                    newCandidates.addAll(buildAndScoreShortsPool(serviceId, dbHelper))
 
                     synchronized(shortsCache) {
                         val existingIds = HashSet<String>()
@@ -1156,6 +1139,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 synchronized(extractor) {
                     info = StreamInfo.getInfo(extractor)
                 }
+                info.relatedItems = dbHelper.nativeRelatedVideos(info, serviceId)
                 var thumbUrl = ""
                 if (info.thumbnails != null && !info.thumbnails.isEmpty()) {
                     thumbUrl = info.thumbnails[info.thumbnails.size - 1].url
@@ -1298,6 +1282,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 synchronized(extractor) {
                     info = StreamInfo.getInfo(extractor)
                 }
+                info.relatedItems = dbHelper.nativeRelatedVideos(info, serviceId)
 
                 var thumbUrl = ""
                 if (info.thumbnails != null && !info.thumbnails.isEmpty()) {
@@ -1389,6 +1374,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 synchronized(extractor) {
                     info = StreamInfo.getInfo(extractor)
                 }
+                info.relatedItems = dbHelper.nativeRelatedVideos(info, serviceId)
 
                 var thumbUrl = ""
                 if (info.thumbnails != null && !info.thumbnails.isEmpty()) {

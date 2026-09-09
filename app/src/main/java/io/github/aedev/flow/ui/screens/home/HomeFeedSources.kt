@@ -19,6 +19,7 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
+import javax.inject.Singleton
 
 private const val RELATED_TTL_MS = 45L * 60L * 1000L
 private const val RELATED_FETCH_CONCURRENCY = 3
@@ -35,9 +36,12 @@ internal data class RelatedGraphFetchResult(
 /**
  * Seed discovery and related-graph retrieval for the home feed.
  *
- * Unscoped, so its per-seed caches live and die with the ViewModel that injects it — the same
- * lifetime the fields had when they were members of it.
+ * `@Singleton` (app-wide, one instance) rather than scoped to the ViewModel that injects it - its
+ * relatedCache/savedSeedCooldown are meant to be shared by anything reading the home feed, which
+ * now includes Local Server's embedded HTTP server (reached via LocalServerEntryPoint, since that
+ * code runs outside Hilt's graph) as well as HomeViewModel's Compose screen.
  */
+@Singleton
 class HomeFeedSources
     @Inject
     constructor(
