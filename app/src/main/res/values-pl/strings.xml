@@ -4,7 +4,7 @@
     <string name="subscribers_count_template">%1$s subskrybentów</string>
     <string name="error_yt_music_premium_hint">Ten utwór jest dostępny tylko dla subskrybentów YouTube Music Premium.</string>
     <string name="support_flow_dev_desc">Jeśli uważasz, że Flow jest przydatny i chcesz wesprzeć jego rozwój, możesz wesprzeć go na Patreonie lub przekazać darowiznę za pośrednictwem poniższych adresów. Twoje wsparcie pomoże utrzymać projekt przy życiu!</string>
-    <string name="subscriptions_search_placeholder">Wyszukaj subskrypcje...</string>
+    <string name="subscriptions_search_placeholder">Wyszukaj subskrypcje ...</string>
     <string name="top_bar_subscriptions_title">Subskrypcje</string>
     <string name="subscribed">Zasubskrybowano</string>
     <string name="no_subscriptions_yet">Nie Dodano Jeszcze Subskrypcji</string>
