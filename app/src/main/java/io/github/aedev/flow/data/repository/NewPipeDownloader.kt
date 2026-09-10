@@ -2,7 +2,10 @@ package io.github.aedev.flow.data.repository
 
 import android.content.Context
 import io.github.aedev.flow.network.AppProxyManager
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.OkHttpClient
+import org.schabi.newpipe.extractor.downloader.CancellableCall
 import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
@@ -54,8 +57,7 @@ class NewPipeDownloader private constructor(context: Context) : Downloader() {
         }
     }
 
-    @Throws(IOException::class, ReCaptchaException::class)
-    override fun execute(request: Request): Response {
+    private fun buildOkHttpRequest(request: Request): okhttp3.Request {
         val httpMethod = request.httpMethod()
         val url = request.url()
         val headers = request.headers()
@@ -85,21 +87,61 @@ class NewPipeDownloader private constructor(context: Context) : Downloader() {
             builder.get()
         }
 
-        return client.newCall(builder.build()).execute().use { response ->
-            if (response.code == 429) {
-                throw ReCaptchaException("reCaptcha Challenge requested", url)
+        return builder.build()
+    }
+
+    @Throws(IOException::class, ReCaptchaException::class)
+    private fun toNewPipeResponse(response: okhttp3.Response, url: String): Response {
+        if (response.code == 429) {
+            throw ReCaptchaException("reCaptcha Challenge requested", url)
+        }
+
+        val rawBody = response.body?.bytes() ?: ByteArray(0)
+        val responseString = String(rawBody, Charsets.UTF_8)
+        val responseHeaders = response.headers.toMultimap()
+        val latestUrl = response.request.url.toString()
+
+        return Response(
+            response.code,
+            response.message,
+            responseHeaders,
+            responseString,
+            rawBody,
+            latestUrl,
+        )
+    }
+
+    @Throws(IOException::class, ReCaptchaException::class)
+    override fun execute(request: Request): Response {
+        client.newCall(buildOkHttpRequest(request)).execute().use { response ->
+            return toNewPipeResponse(response, request.url())
+        }
+    }
+
+    override fun executeAsync(request: Request, callback: Downloader.AsyncCallback): CancellableCall {
+        val call = client.newCall(buildOkHttpRequest(request))
+        val cancellableCall = CancellableCall(call)
+        call.enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                try {
+                    callback.onError(e)
+                } finally {
+                    cancellableCall.setFinished()
+                }
             }
 
-            val responseString = response.body?.string() ?: ""
-            val responseHeaders = response.headers.toMultimap()
-
-            Response(
-                response.code,
-                response.message,
-                responseHeaders,
-                responseString,
-                url
-            )
-        }
+            override fun onResponse(call: Call, response: okhttp3.Response) {
+                try {
+                    response.use {
+                        callback.onSuccess(toNewPipeResponse(response, request.url()))
+                    }
+                } catch (e: Exception) {
+                    callback.onError(e)
+                } finally {
+                    cancellableCall.setFinished()
+                }
+            }
+        })
+        return cancellableCall
     }
 }

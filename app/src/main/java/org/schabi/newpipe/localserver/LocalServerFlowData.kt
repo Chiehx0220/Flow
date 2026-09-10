@@ -34,8 +34,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
-import org.schabi.newpipe.extractor.Image
-import org.schabi.newpipe.extractor.Image.ResolutionLevel
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.channel.ChannelInfoItem
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
@@ -60,7 +58,7 @@ fun HistoryDbHelper.nativeSubscriptions(): List<InfoItem> = runBlocking {
     subscriptionRepository().getAllSubscriptions().first().map { sub ->
         val item = ChannelInfoItem(0, channelIdToUrl(sub.channelId), sub.channelName)
         if (sub.channelThumbnail.isNotEmpty()) {
-            item.setThumbnails(listOf(Image(sub.channelThumbnail, -1, -1, ResolutionLevel.UNKNOWN)))
+            item.thumbnailUrl = sub.channelThumbnail
         }
         item
     }
@@ -148,7 +146,7 @@ fun HistoryDbHelper.nativeBookmarkedPlaylists(): List<InfoItem> = runBlocking {
     playlistRepository().getSavedVideoPlaylistsFlow().first().map { info ->
         val item = PlaylistInfoItem(0, playlistIdToUrl(info.id), info.name)
         if (info.thumbnailUrl.isNotEmpty()) {
-            item.setThumbnails(listOf(Image(info.thumbnailUrl, -1, -1, ResolutionLevel.UNKNOWN)))
+            item.thumbnailUrl = info.thumbnailUrl
         }
         item
     }
@@ -349,7 +347,7 @@ fun HistoryDbHelper.nativeHistory(): List<InfoItem> = runBlocking {
         item.setUploaderName(entry.channelName)
         item.setUploaderUrl(if (entry.channelId.isNotEmpty()) channelIdToUrl(entry.channelId) else "")
         if (entry.thumbnailUrl.isNotEmpty()) {
-            item.setThumbnails(listOf(Image(entry.thumbnailUrl, -1, -1, ResolutionLevel.UNKNOWN)))
+            item.thumbnailUrl = entry.thumbnailUrl
         }
         item
     }
@@ -411,13 +409,13 @@ fun StreamInfoItem.toFlowVideo(@Suppress("UNUSED_PARAMETER") serviceId: Int): Fl
         title = this.name ?: "",
         channelName = this.uploaderName ?: this.name ?: "",
         channelId = channelUrlToId(this.uploaderUrl) ?: "",
-        thumbnailUrl = HtmlRendererCommon.getThumbnailUrl(this.thumbnails),
+        thumbnailUrl = HtmlRendererCommon.getThumbnailUrl(this.thumbnailUrl),
         duration = durationSeconds,
         viewCount = this.viewCount.coerceAtLeast(-1),
         likeCount = 0,
         uploadDate = this.textualUploadDate ?: "",
         description = "",
-        channelThumbnailUrl = HtmlRendererCommon.getThumbnailUrl(this.uploaderAvatars),
+        channelThumbnailUrl = HtmlRendererCommon.getThumbnailUrl(this.uploaderAvatarUrl),
         tags = emptyList(),
         isLive = this.streamType == StreamType.LIVE_STREAM || this.streamType == StreamType.AUDIO_LIVE_STREAM,
         isShort = durationSeconds in 1..120,
@@ -452,10 +450,10 @@ fun FlowVideo.toStreamInfoItem(serviceId: Int): StreamInfoItem {
     item.setUploaderName(this.channelName)
     item.setUploaderUrl(if (this.channelId.isNotEmpty()) channelIdToUrl(this.channelId) else "")
     if (this.thumbnailUrl.isNotEmpty()) {
-        item.setThumbnails(listOf(Image(this.thumbnailUrl, -1, -1, ResolutionLevel.UNKNOWN)))
+        item.thumbnailUrl = this.thumbnailUrl
     }
     if (this.channelThumbnailUrl.isNotEmpty()) {
-        item.setUploaderAvatars(listOf(Image(this.channelThumbnailUrl, -1, -1, ResolutionLevel.UNKNOWN)))
+        item.uploaderAvatarUrl = this.channelThumbnailUrl
     }
     item.setDuration(this.duration.toLong())
     item.setViewCount(this.viewCount)

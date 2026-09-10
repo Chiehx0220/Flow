@@ -193,7 +193,12 @@ object YouTubeMusicService {
                     query.contains("official") || query.contains("music") || query.contains("song")
                 val refinedQuery = if (isSpecificQuery) query else "$query song"
 
-                val searchExtractor = service.getSearchExtractor(refinedQuery, emptyList(), "")
+                val searchExtractor =
+                    service.getSearchExtractor(
+                        refinedQuery,
+                        io.github.aedev.flow.utils.SearchFilterResolver.resolveSearchContentFilters(service, emptyList()),
+                        emptyList(),
+                    )
                 searchExtractor.fetchPage()
 
                 val tracks =
@@ -227,7 +232,12 @@ object YouTubeMusicService {
         withContext(Dispatchers.IO) {
             try {
                 val service = ServiceList.YouTube
-                val searchExtractor = service.getSearchExtractor(query, listOf("channel"), "")
+                val searchExtractor =
+                    service.getSearchExtractor(
+                        query,
+                        io.github.aedev.flow.utils.SearchFilterResolver.resolveSearchContentFilters(service, listOf("channels")),
+                        emptyList(),
+                    )
                 searchExtractor.fetchPage()
 
                 searchExtractor.initialPage.items
@@ -238,7 +248,7 @@ object YouTubeMusicService {
                         ArtistDetails(
                             name = item.name,
                             channelId = channelId,
-                            thumbnailUrl = item.thumbnails.maxByOrNull { it.height }?.url ?: "",
+                            thumbnailUrl = item.thumbnailUrl ?: "",
                             subscriberCount = item.subscriberCount,
                             description = item.description ?: "",
                             bannerUrl = "", // Not available in search results
@@ -468,12 +478,13 @@ object YouTubeMusicService {
                 PlaylistDetails(
                     id = playlistId,
                     title = playlistInfo.name,
-                    thumbnailUrl = playlistInfo.thumbnails?.maxByOrNull { it.height }?.url ?: "",
+                    thumbnailUrl = playlistInfo.thumbnailUrl ?: "",
                     author = playlistInfo.uploaderName ?: "Unknown",
                     authorId = playlistInfo.uploaderUrl?.substringAfterLast("/"),
                     authorAvatarUrl = null,
                     trackCount = tracks.size,
-                    description = playlistInfo.description?.content,
+                    // PipePipeExtractor's PlaylistInfo dropped getDescription() entirely.
+                    description = null,
                     views = null,
                     durationText = durationText,
                     dateText = null,
@@ -638,7 +649,12 @@ object YouTubeMusicService {
                 }
 
                 val service = ServiceList.YouTube
-                val searchExtractor = service.getSearchExtractor(query, emptyList(), "")
+                val searchExtractor =
+                    service.getSearchExtractor(
+                        query,
+                        io.github.aedev.flow.utils.SearchFilterResolver.resolveSearchContentFilters(service, listOf("playlists")),
+                        emptyList(),
+                    )
                 searchExtractor.fetchPage()
 
                 searchExtractor.initialPage.items
@@ -648,7 +664,7 @@ object YouTubeMusicService {
                         MusicPlaylist(
                             id = item.url.substringAfter("list="),
                             title = item.name,
-                            thumbnailUrl = item.thumbnails.maxByOrNull { it.height }?.url ?: "",
+                            thumbnailUrl = item.thumbnailUrl ?: "",
                             trackCount = item.streamCount.toInt(),
                             author = item.uploaderName ?: "Unknown Artist",
                         )
@@ -755,7 +771,7 @@ object YouTubeMusicService {
                 videoId = videoId,
                 title = cleanedTitle,
                 artist = extractedArtist,
-                thumbnailUrl = item.thumbnails.maxByOrNull { it.height }?.url ?: "",
+                thumbnailUrl = item.thumbnailUrl ?: "",
                 duration = item.duration.toInt(),
                 views = item.viewCount,
                 sourceUrl = item.url,

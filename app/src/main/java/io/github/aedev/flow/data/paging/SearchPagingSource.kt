@@ -17,9 +17,9 @@ import io.github.aedev.flow.data.model.hasLikelyCollaborationByline
 import io.github.aedev.flow.data.shorts.ShortsClassifier
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.pages.SearchVideoItem
+import io.github.aedev.flow.utils.SearchFilterResolver
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.avatarImageIdentityKey
-import io.github.aedev.flow.utils.distinctBestImageUrls
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -115,7 +115,12 @@ class SearchPagingSource(
                     return@withContext loadViewSortedPage(page)
                 }
 
-                val extractor = service.getSearchExtractor(query, contentFilters, "")
+                val extractor =
+                    service.getSearchExtractor(
+                        query,
+                        SearchFilterResolver.resolveSearchContentFilters(service, contentFilters),
+                        emptyList(),
+                    )
                 extractor.fetchPage()
 
                 val infoPage =
@@ -143,14 +148,10 @@ class SearchPagingSource(
                                         item.streamType == StreamType.AUDIO_LIVE_STREAM
 
                                 val videoId = extractVideoId(item.url)
-                                val thumbnail =
-                                    ThumbnailUrlResolver.normalizeVideoThumbnail(
-                                        videoId,
-                                        item.thumbnails.maxByOrNull { it.width }?.url,
-                                    )
+                                val thumbnail = ThumbnailUrlResolver.normalizeVideoThumbnail(videoId, item.thumbnailUrl)
                                 val channelThumbs =
                                     try {
-                                        item.uploaderAvatars.distinctBestImageUrls()
+                                        listOfNotNull(item.uploaderAvatarUrl)
                                     } catch (_: Exception) {
                                         emptyList()
                                     }
@@ -185,7 +186,7 @@ class SearchPagingSource(
                             is ChannelInfoItem -> {
                                 val thumb =
                                     try {
-                                        item.thumbnails.maxByOrNull { it.width }?.url ?: ""
+                                        item.thumbnailUrl ?: ""
                                     } catch (_: Exception) {
                                         ""
                                     }
@@ -205,7 +206,7 @@ class SearchPagingSource(
                             is PlaylistInfoItem -> {
                                 val thumb =
                                     try {
-                                        item.thumbnails.maxByOrNull { it.width }?.url ?: ""
+                                        item.thumbnailUrl ?: ""
                                     } catch (_: Exception) {
                                         ""
                                     }

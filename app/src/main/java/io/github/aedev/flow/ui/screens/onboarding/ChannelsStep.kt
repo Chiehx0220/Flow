@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.model.distinctByNonBlankKey
+import io.github.aedev.flow.utils.SearchFilterResolver
 import io.github.aedev.flow.utils.formatSubscriberCount
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -309,7 +310,12 @@ private fun ChannelResultRow(
 internal suspend fun searchChannels(query: String): List<ChannelSearchResult> =
     withContext(Dispatchers.IO) {
         try {
-            val extractor = ServiceList.YouTube.getSearchExtractor(query, listOf("channels"), null)
+            val extractor =
+                ServiceList.YouTube.getSearchExtractor(
+                    query,
+                    SearchFilterResolver.resolveSearchContentFilters(ServiceList.YouTube, listOf("channels")),
+                    emptyList(),
+                )
             extractor.fetchPage()
             extractor.initialPage.items
                 .filterIsInstance<ChannelInfoItem>()
@@ -339,11 +345,7 @@ internal suspend fun searchChannels(query: String): List<ChannelSearchResult> =
                     ChannelSearchResult(
                         channelId = channelId,
                         name = item.name ?: "",
-                        thumbnailUrl =
-                            item.thumbnails
-                                .sortedByDescending { it.height }
-                                .firstOrNull()
-                                ?.url ?: "",
+                        thumbnailUrl = item.thumbnailUrl ?: "",
                         subscriberCount = item.subscriberCount,
                     )
                 }.distinctByNonBlankKey(ChannelSearchResult::channelId)

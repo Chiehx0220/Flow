@@ -3,7 +3,6 @@ package io.github.aedev.flow.player.stream
 import android.util.Log
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
 import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.AudioTrackType
 import org.schabi.newpipe.extractor.stream.DeliveryMethod
 import org.schabi.newpipe.extractor.stream.Stream
 import org.schabi.newpipe.extractor.stream.VideoStream
@@ -85,16 +84,24 @@ object InnerTubeStreamBridge {
     private fun AudioStream.Builder.applyAudioTrackMetadata(
         format: PlayerResponse.StreamingData.Format
     ): AudioStream.Builder {
-        setAudioTrackType(if (format.isOriginal) AudioTrackType.ORIGINAL else AudioTrackType.DUBBED)
-        format.audioTrack?.let { track ->
-            track.id?.takeIf { it.isNotBlank() }?.let { setAudioTrackId(it) }
-            track.displayName?.takeIf { it.isNotBlank() }?.let { setAudioTrackName(it) }
-        }
+        // PipePipeExtractor has no AudioTrackType enum any more - "original" is signalled by the
+        // literal "(original)" suffix in the track name, and a blank/null name reads as original
+        // too (see AudioStreamSelector.isOriginalAudioTrack). So a dubbed track must always get a
+        // non-blank name, even with no InnerTube displayName, or it would be misclassified.
+        val displayName = format.audioTrack?.displayName?.takeIf { it.isNotBlank() }
+        val trackName =
+            if (format.isOriginal) {
+                displayName?.let { "$it (original)" } ?: "(original)"
+            } else {
+                displayName ?: format.audioTrack?.id?.takeIf { it.isNotBlank() } ?: "dubbed"
+            }
+        setAudioTrackName(trackName)
+        format.audioTrack?.id?.takeIf { it.isNotBlank() }?.let { setAudioTrackId(it) }
         format.audioLanguageTag?.let { tag ->
             runCatching { Locale.forLanguageTag(tag) }
                 .getOrNull()
                 ?.takeIf { it.language.isNotBlank() }
-                ?.let { setAudioLocale(it) }
+                ?.let { setAudioLocale(tag) }
         }
         return this
     }
@@ -142,7 +149,6 @@ object InnerTubeStreamBridge {
         item.bitrate = format.averageBitrate ?: format.bitrate
         format.contentLength?.let { item.contentLength = it }
         format.approxDurationMs?.toLongOrNull()?.let { item.approxDurationMs = it }
-        format.lastModified?.let { item.lastModified = it }
         format.initRange?.let { range ->
             range.start?.toIntOrNull()?.let { item.initStart = it }
             range.end?.toIntOrNull()?.let { item.initEnd = it }

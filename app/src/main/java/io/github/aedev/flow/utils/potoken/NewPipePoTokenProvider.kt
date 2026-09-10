@@ -3,18 +3,24 @@ package io.github.aedev.flow.utils.potoken
 import android.util.Log
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.services.youtube.InnertubeClientRequestInfo
-import org.schabi.newpipe.extractor.services.youtube.PoTokenProvider
 import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
-import org.schabi.newpipe.extractor.services.youtube.PoTokenResult as ExtractorPoTokenResult
+import org.schabi.newpipe.extractor.services.youtube.YoutubePoTokenResult
+import java.util.function.Function
 
-object NewPipePoTokenProvider : PoTokenProvider {
+/**
+ * PipePipeExtractor replaced the old per-client [org.schabi.newpipe.extractor.services.youtube.PoTokenProvider]
+ * interface (web/webEmbed/android/ios) with a single resolver function registered via
+ * [NewPipe.setYoutubePoTokenResolver], scoped to one MWEB player request. Flow's WebView-based
+ * BotGuard solver ([PoTokenGenerator]) is untouched - only this adapter shape changed.
+ */
+object NewPipePoTokenProvider : Function<String, YoutubePoTokenResult?> {
     private const val TAG = "NewPipePoTokenProvider"
 
     private val poTokenGenerator = PoTokenGenerator
     private val visitorDataLock = Any()
     private var webPoTokenVisitorData: String? = null
 
-    override fun getWebClientPoToken(videoId: String): ExtractorPoTokenResult? {
+    override fun apply(videoId: String): YoutubePoTokenResult? {
         val visitorData = ensureVisitorData() ?: return null
         val poTokenResult =
             try {
@@ -24,18 +30,13 @@ object NewPipePoTokenProvider : PoTokenProvider {
                 null
             } ?: return null
 
-        return ExtractorPoTokenResult(
+        val clientVersion = YoutubeParsingHelper.getClientVersion()
+        return YoutubePoTokenResult(
             visitorData,
+            clientVersion,
             poTokenResult.playerRequestPoToken,
-            poTokenResult.streamingDataPoToken,
         )
     }
-
-    override fun getWebEmbedClientPoToken(videoId: String): ExtractorPoTokenResult? = null
-
-    override fun getAndroidClientPoToken(videoId: String): ExtractorPoTokenResult? = null
-
-    override fun getIosClientPoToken(videoId: String): ExtractorPoTokenResult? = null
 
     private fun ensureVisitorData(): String? {
         synchronized(visitorDataLock) {

@@ -47,7 +47,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.channel.ChannelInfo
-import org.schabi.newpipe.extractor.channel.tabs.ChannelTabInfo
+import org.schabi.newpipe.extractor.channel.ChannelTabInfo
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import java.util.Locale
@@ -357,7 +357,7 @@ class ChannelViewModel
                         // Find the tabs
                         for (tab in channelInfo.tabs) {
                             try {
-                                val tabName = tab.contentFilters.joinToString()
+                                val tabName = tab.contentFilters.joinToString { it.name }
                                 val tabUrl = tab.url ?: ""
                                 Log.d(TAG, "Checking tab: Name=$tabName, URL=$tabUrl")
 
@@ -743,11 +743,7 @@ class ChannelViewModel
                     url.contains("/shorts/") -> url.substringAfter("/shorts/").substringBefore("?")
                     else -> url.substringAfterLast("/").substringBefore("?")
                 }
-            val thumbnail =
-                ThumbnailUrlResolver.normalizeVideoThumbnail(
-                    videoId,
-                    thumbnails.maxByOrNull { it.width }?.url,
-                )
+            val thumbnail = ThumbnailUrlResolver.normalizeVideoThumbnail(videoId, thumbnailUrl)
             val absoluteUploadTimestamp = uploadDate?.offsetDateTime()?.toInstant()?.toEpochMilli()
             val textualDate = textualUploadDate?.takeIf { it.isNotBlank() }
             val displayUploadDate =

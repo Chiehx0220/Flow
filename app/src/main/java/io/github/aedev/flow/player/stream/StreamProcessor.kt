@@ -5,7 +5,6 @@ import io.github.aedev.flow.player.state.AudioTrackOption
 import io.github.aedev.flow.player.state.SubtitleOption
 import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.AudioTrackType
 import org.schabi.newpipe.extractor.stream.SubtitlesStream
 import org.schabi.newpipe.extractor.stream.VideoStream
 import java.util.Locale
@@ -84,8 +83,8 @@ object StreamProcessor {
      * playback has to fall through to a manifest generated from this specific stream.
      */
     fun overridesDefaultAudioTrack(stream: AudioStream?): Boolean {
-        val type = stream?.audioTrackType ?: return false
-        return type != AudioTrackType.ORIGINAL
+        if (stream == null) return false
+        return !stream.isOriginalAudioTrack()
     }
 
     /** Derive a stable logical-track key while collapsing only alternate formats of that track. */
@@ -93,8 +92,8 @@ object StreamProcessor {
         audioTrackGroupingKey(
             trackId = stream.audioTrackId,
             trackName = stream.audioTrackName,
-            languageTag = stream.audioLocale?.toLanguageTag(),
-            trackType = stream.audioTrackType?.name,
+            languageTag = stream.audioLocale,
+            trackType = if (stream.isOriginalAudioTrack()) "ORIGINAL" else null,
         )
 
     /**
@@ -104,7 +103,8 @@ object StreamProcessor {
     fun audioTrackDisplayName(stream: AudioStream): String? {
         stream.audioTrackName?.takeIf { it.isNotBlank() }?.let { return it }
 
-        stream.audioLocale?.language?.takeIf { it.isNotBlank() }?.let { langCode ->
+        stream.audioLocale?.takeIf { it.isNotBlank() }?.let { localeTag ->
+            val langCode = Locale.forLanguageTag(localeTag.replace('_', '-')).language
             localizedLanguageName(langCode)?.let { return it }
         }
 
@@ -128,7 +128,7 @@ object StreamProcessor {
                 label = audioTrackDisplayName(stream).orEmpty(),
                 language =
                     stream.audioLocale
-                        ?.displayLanguage
+                        ?.let { Locale.forLanguageTag(it.replace('_', '-')).displayLanguage }
                         ?.takeIf { it.isNotBlank() }
                         ?: "",
                 bitrate = stream.averageBitrate.coerceAtLeast(0).toLong(),

@@ -440,7 +440,7 @@ object HtmlRendererCommon {
                 val cName = item.name ?: "Channel"
                 val firstChar = avatarInitial(cName)
                 val avatarBg = avatarColorFor(cName)
-                val rawThumb = getThumbnailUrl(item.thumbnails).takeIf { it.isNotBlank() }
+                val rawThumb = getThumbnailUrl(item.thumbnailUrl).takeIf { it.isNotBlank() }
 
                 // Subscriber count when the source item carries one (search/kiosk results do,
                 // this app's own subscriptions list does not track it) reads more useful here than
@@ -484,7 +484,7 @@ object HtmlRendererCommon {
             var uploaderAvatarUrl: String? = null
             if (item is StreamInfoItem) {
                 uploaderName = item.uploaderName
-                uploaderAvatarUrl = if (hasThumbnail(item.uploaderAvatars)) getThumbnailUrl(item.uploaderAvatars) else fallbackAvatarUrl
+                uploaderAvatarUrl = if (hasThumbnail(item.uploaderAvatarUrl)) getThumbnailUrl(item.uploaderAvatarUrl) else fallbackAvatarUrl
             } else {
                 uploaderName = item.name
             }
@@ -492,7 +492,7 @@ object HtmlRendererCommon {
             val firstChar = avatarInitial(uploaderName)
             val avatarBg = avatarColorFor(uploaderName)
 
-            val itemThumb = getThumbnailUrl(item.thumbnails)
+            val itemThumb = getThumbnailUrl(item.thumbnailUrl)
 
             sb.append("    <div class=\"card\">\n")
             if (showDeleteButton) {
@@ -606,6 +606,10 @@ object HtmlRendererCommon {
         }
         return NO_THUMBNAIL_PLACEHOLDER
     }
+
+    /** Raw presence check for the singular-URL shape, matching [hasThumbnail]'s list overload. */
+    @JvmStatic
+    fun hasThumbnail(url: String?): Boolean = !url.isNullOrBlank()
 
     // YoutubeService intentionally forces hl=zu (Zulu) on every YouTube request to stop YouTube
     // auto-translating video titles into the viewer's own locale (see the "Using zu (Zulu)..."

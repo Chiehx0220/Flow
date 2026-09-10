@@ -49,6 +49,7 @@ import io.github.aedev.flow.player.stream.CaptionTrackResolver
 import io.github.aedev.flow.player.stream.InnerTubeStreamBridge
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
 import io.github.aedev.flow.player.stream.StreamMergeUtils
+import io.github.aedev.flow.player.stream.isOriginalAudioTrack
 import io.github.aedev.flow.player.stream.StreamProcessor
 import io.github.aedev.flow.player.stream.StreamSizeEstimator
 import io.github.aedev.flow.player.stream.VideoCodecUtils
@@ -3471,23 +3472,16 @@ class VideoPlayerViewModel
             val audioStream =
                 when (preferredAudioLanguage) {
                     "original" -> {
-                        audioCandidates.firstOrNull { stream ->
-                            stream.audioTrackType == org.schabi.newpipe.extractor.stream.AudioTrackType.ORIGINAL
-                        }
-                            ?: audioCandidates.firstOrNull { stream ->
-                                stream.audioTrackType != org.schabi.newpipe.extractor.stream.AudioTrackType.DUBBED
-                            }
+                        audioCandidates.firstOrNull { stream -> stream.isOriginalAudioTrack() }
                             ?: audioCandidates.firstOrNull()
                     }
 
                     else -> {
                         audioCandidates.firstOrNull { a ->
-                            val lang = a.audioLocale?.language ?: ""
+                            val lang = a.audioLocale ?: ""
                             lang.startsWith(preferredAudioLanguage, true)
                         }
-                            ?: audioCandidates.firstOrNull { stream ->
-                                stream.audioTrackType == org.schabi.newpipe.extractor.stream.AudioTrackType.ORIGINAL
-                            }
+                            ?: audioCandidates.firstOrNull { stream -> stream.isOriginalAudioTrack() }
                             ?: audioCandidates.firstOrNull()
                     }
                 }

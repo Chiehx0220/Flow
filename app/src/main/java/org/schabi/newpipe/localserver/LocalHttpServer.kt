@@ -1,20 +1,19 @@
 package org.schabi.newpipe.localserver
 
-import org.schabi.newpipe.extractor.Image
-import org.schabi.newpipe.extractor.Image.ResolutionLevel
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.ListExtractor.InfoItemsPage
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.channel.ChannelExtractor
-import org.schabi.newpipe.extractor.channel.tabs.ChannelTabExtractor
+import org.schabi.newpipe.extractor.channel.ChannelTabExtractor
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.kiosk.KioskExtractor
 import org.schabi.newpipe.extractor.playlist.PlaylistExtractor
 import org.schabi.newpipe.extractor.search.SearchExtractor
+import org.schabi.newpipe.extractor.search.filter.Filter
+import org.schabi.newpipe.extractor.search.filter.FilterItem
 import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.AudioTrackType
 import org.schabi.newpipe.extractor.stream.StreamExtractor
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
@@ -23,6 +22,8 @@ import org.schabi.newpipe.extractor.stream.SubtitlesStream
 import org.schabi.newpipe.extractor.stream.StreamType
 
 import io.github.aedev.flow.data.recommendation.InteractionType
+import io.github.aedev.flow.player.stream.isOriginalAudioTrack
+import io.github.aedev.flow.utils.SearchFilterResolver
 
 import java.io.BufferedReader
 import java.io.IOException
@@ -216,7 +217,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             try {
                 val channelExtractor = service.getChannelExtractor(channelUrl)
                 channelExtractor.fetchPage()
-                val tabExtractor = service.getChannelTabExtractorFromIdAndBaseUrl(
+                val tabExtractor = service.getChannelTabExtractorFromId(
                     channelExtractor.id, "videos", channelExtractor.baseUrl)
                 tabExtractor.fetchPage()
                 val pageItems: List<*>? = if (tabExtractor.initialPage != null) tabExtractor.initialPage.items else null
@@ -273,13 +274,24 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         /**
-         * Builds a search extractor with the default content filter (an empty filter list, which
-         * this extractor treats as "no filter" / all results).
+         * Builds a search extractor with the default "all" content filter. An empty filter list is
+         * NOT a safe substitute here: YoutubeFilters.evaluateSelectedFilters() has no graceful
+         * default for it and throws ("we have a problem here") - the filter must be resolved by
+         * name and passed explicitly.
          */
         @JvmStatic
         @Throws(ExtractionException::class)
         fun getDefaultSearchExtractor(service: StreamingService, query: String): SearchExtractor {
-            return service.getSearchExtractor(query)
+            val defaultFilter =
+                SearchFilterResolver.resolveContentFilters(
+                    service,
+                    listOf(SearchFilterResolver.DEFAULT_CONTENT_FILTER_NAME),
+                )
+            return if (defaultFilter.isEmpty()) {
+                service.getSearchExtractor(query)
+            } else {
+                service.getSearchExtractor(query, defaultFilter, emptyList())
+            }
         }
 
         /**
@@ -306,7 +318,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         // Shared by both the stream-proxy track selection and the DASH manifest generator.
         @JvmStatic
         fun isOriginalAudioTrack(stream: AudioStream): Boolean {
-            return stream.audioTrackType == null || stream.audioTrackType == AudioTrackType.ORIGINAL
+            return stream.isOriginalAudioTrack()
         }
 
         // Priority order for picking the "best" audio track when nothing more specific was requested:
@@ -325,8 +337,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 if (isOrigA != isOrigB) {
                     return@Comparator if (isOrigA) -1 else 1
                 }
-                val localeA = a.audioLocale?.language
-                val localeB = b.audioLocale?.language
+                val localeA = a.audioLocale?.let { Locale.forLanguageTag(it.replace('_', '-')).language }
+                val localeB = b.audioLocale?.let { Locale.forLanguageTag(it.replace('_', '-')).language }
                 val langMatchA = (localeA != null && localeA.equals(langCode, ignoreCase = true))
                 val langMatchB = (localeB != null && localeB.equals(langCode, ignoreCase = true))
                 if (langMatchA != langMatchB) {
@@ -718,20 +730,14 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 // avatar (that's a channel-level field, not a video-level one), so backfill it
                 // from the avatar this app already stored when the user subscribed - otherwise
                 // every card in the feed falls back to a plain colored-initial placeholder.
-                val subscribedAvatarUrl = channel.thumbnails
-                    ?.takeIf { it.isNotEmpty() }
-                    ?.let { HtmlRendererCommon.getThumbnailUrl(it) }
+                val subscribedAvatarUrl = channel.thumbnailUrl?.takeIf { it.isNotBlank() }
                 futures.add(executorService.submit(Callable {
                     val channelService = NewPipe.getServiceByUrl(url)
                     val uploads = fetchChannelUploads(channelService, url)
                     if (!subscribedAvatarUrl.isNullOrEmpty()) {
-                        val subscribedAvatarImages = listOf(Image(subscribedAvatarUrl, -1, -1, ResolutionLevel.UNKNOWN))
                         for (upload in uploads) {
-                            if (upload is StreamInfoItem) {
-                                val currentAvatars = upload.uploaderAvatars
-                                if (currentAvatars.isNullOrEmpty()) {
-                                    upload.setUploaderAvatars(subscribedAvatarImages)
-                                }
+                            if (upload is StreamInfoItem && upload.uploaderAvatarUrl.isNullOrBlank()) {
+                                upload.uploaderAvatarUrl = subscribedAvatarUrl
                             }
                         }
                     }
@@ -944,18 +950,20 @@ class LocalHttpServer(private val context: android.content.Context, private val 
 
                 var items: List<InfoItem>
                 var next: Page?
-                // getChannelTabExtractorFromIdAndBaseUrl(id, tab, baseUrl) (used by the plain
+                // getChannelTabExtractorFromId(id, tab, baseUrl) (used by the plain
                 // else-branch below) hardcodes its sortFilter to "" - it has no way to pass one
                 // through - so a non-default sort needs the lower-level construction path built
                 // here directly instead. Stock NewPipeExtractor's channel-tab factory has no
                 // "search within a channel" tab at all, unlike the fork this was ported from, so
                 // that feature is dropped rather than adapted.
                 val tabExtractor = if (sort != null) {
+                    val contentFilter = listOf(FilterItem(Filter.ITEM_IDENTIFIER_UNKNOWN, tab))
+                    val sortFilter = listOf(FilterItem(Filter.ITEM_IDENTIFIER_UNKNOWN, sort))
                     val linkHandler = service.channelTabLHFactory.fromQuery(
-                        channelExtractor.id, listOf(tab), sort, channelExtractor.baseUrl)
+                        channelExtractor.id, contentFilter, sortFilter, channelExtractor.baseUrl)
                     service.getChannelTabExtractor(linkHandler)
                 } else {
-                    service.getChannelTabExtractorFromIdAndBaseUrl(channelExtractor.id, tab, channelExtractor.baseUrl)
+                    service.getChannelTabExtractorFromId(channelExtractor.id, tab, channelExtractor.baseUrl)
                 }
                 if (nextPage != null) {
                     val page = tabExtractor.getPage(nextPage)
@@ -1687,7 +1695,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                     val locale = firstStream.audioLocale
                     var langStr = ""
                     if (locale != null) {
-                        langStr = " lang=\"" + locale.toLanguageTag() + "\""
+                        langStr = " lang=\"" + locale + "\""
                     } else if (finalTrackId.isNotEmpty()) {
                         val dotIdx = finalTrackId.indexOf(".")
                         langStr = if (dotIdx != -1) {
@@ -1897,7 +1905,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             var items: List<InfoItem>
             var next: Page?
             if ("playlists" == tab) {
-                val tabExtractor = service.getChannelTabExtractorFromIdAndBaseUrl(channelExtractor.id, "playlists", channelExtractor.baseUrl)
+                val tabExtractor = service.getChannelTabExtractorFromId(channelExtractor.id, "playlists", channelExtractor.baseUrl)
                 if (nextPage != null) {
                     val page = tabExtractor.getPage(nextPage)
                     items = page.items as List<InfoItem>
@@ -1909,7 +1917,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                     next = page.nextPage
                 }
             } else {
-                val tabExtractor = service.getChannelTabExtractorFromIdAndBaseUrl(channelExtractor.id, "videos", channelExtractor.baseUrl)
+                val tabExtractor = service.getChannelTabExtractorFromId(channelExtractor.id, "videos", channelExtractor.baseUrl)
                 if (nextPage != null) {
                     val page = tabExtractor.getPage(nextPage)
                     items = page.items as List<InfoItem>

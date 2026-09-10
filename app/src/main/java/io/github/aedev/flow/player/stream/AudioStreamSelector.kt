@@ -2,9 +2,19 @@ package io.github.aedev.flow.player.stream
 
 import io.github.aedev.flow.data.local.MusicAudioQuality
 import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.AudioTrackType
 import kotlin.math.abs
 import java.util.Locale
+
+/**
+ * PipePipeExtractor dropped the AudioTrackType enum (ORIGINAL/DUBBED/SECONDARY/DESCRIPTIVE) —
+ * "original" is now signalled by the literal "(original)" suffix in [AudioStream.getAudioTrackName]
+ * (see YoutubeStreamExtractor's HLS master-manifest parsing), and a blank/null name is itself
+ * read as original.
+ */
+fun AudioStream.isOriginalAudioTrack(): Boolean {
+    val name = audioTrackName
+    return name.isNullOrBlank() || name.contains("original", ignoreCase = true)
+}
 
 object AudioStreamSelector {
 
@@ -51,32 +61,23 @@ object AudioStreamSelector {
         val normalizedPreference = preferredAudioLanguage.trim().lowercase(Locale.ROOT)
 
         if (normalizedPreference.isBlank() || normalizedPreference == "original") {
-            val originals = streams.filter { it.audioTrackType == AudioTrackType.ORIGINAL }
+            val originals = streams.filter { it.isOriginalAudioTrack() }
             if (originals.isNotEmpty()) return originals
-
-            val nonDubbed = streams.filter { it.audioTrackType != AudioTrackType.DUBBED }
-            if (nonDubbed.isNotEmpty()) return nonDubbed
 
             return streams
         }
 
         val languageMatches = streams.filter { stream ->
-            val localeLanguage = stream.audioLocale?.language.orEmpty()
-            val localeTag = stream.audioLocale?.toLanguageTag().orEmpty()
+            val locale = stream.audioLocale.orEmpty()
             val trackName = stream.audioTrackName.orEmpty()
-            localeLanguage.equals(normalizedPreference, ignoreCase = true) ||
-                localeLanguage.startsWith(normalizedPreference, ignoreCase = true) ||
-                localeTag.equals(normalizedPreference, ignoreCase = true) ||
-                localeTag.startsWith(normalizedPreference, ignoreCase = true) ||
+            locale.equals(normalizedPreference, ignoreCase = true) ||
+                locale.startsWith(normalizedPreference, ignoreCase = true) ||
                 trackName.contains(normalizedPreference, ignoreCase = true)
         }
         if (languageMatches.isNotEmpty()) return languageMatches
 
-        val originals = streams.filter { it.audioTrackType == AudioTrackType.ORIGINAL }
+        val originals = streams.filter { it.isOriginalAudioTrack() }
         if (originals.isNotEmpty()) return originals
-
-        val nonDubbed = streams.filter { it.audioTrackType != AudioTrackType.DUBBED }
-        if (nonDubbed.isNotEmpty()) return nonDubbed
 
         return streams
     }

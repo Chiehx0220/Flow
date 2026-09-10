@@ -14,6 +14,7 @@ import io.github.aedev.flow.innertube.models.SongItem
 import io.github.aedev.flow.innertube.models.response.WatchMetadataResponse
 import io.github.aedev.flow.utils.PerformanceDispatcher
 import io.github.aedev.flow.utils.RelativeUploadDateParser
+import io.github.aedev.flow.utils.SearchFilterResolver
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.avatarImageIdentityKey
 import io.github.aedev.flow.utils.bestImageUrl
@@ -38,7 +39,6 @@ import org.schabi.newpipe.extractor.comments.CommentsInfoItem
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.kiosk.KioskExtractor
 import org.schabi.newpipe.extractor.localization.ContentCountry
-import org.schabi.newpipe.extractor.stream.ContentAvailability
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.StreamType
@@ -286,7 +286,12 @@ class YouTubeRepository
             withContext(Dispatchers.IO) {
                 try {
                     // Search for #shorts which often returns actual shorts
-                    val searchExtractor = service.getSearchExtractor("#shorts")
+                    val searchExtractor =
+                        service.getSearchExtractor(
+                            "#shorts",
+                            SearchFilterResolver.resolveSearchContentFilters(service, emptyList()),
+                            emptyList(),
+                        )
                     searchExtractor.fetchPage()
 
                     // FIX: Correct Pagination Logic
@@ -320,7 +325,12 @@ class YouTubeRepository
         ): Pair<List<Video>, Page?> =
             withContext(Dispatchers.IO) {
                 try {
-                    val searchExtractor = service.getSearchExtractor(query)
+                    val searchExtractor =
+                        service.getSearchExtractor(
+                            query,
+                            SearchFilterResolver.resolveSearchContentFilters(service, emptyList()),
+                            emptyList(),
+                        )
                     searchExtractor.fetchPage()
 
                     // FIX: Correct Pagination Logic
@@ -357,7 +367,12 @@ class YouTubeRepository
         ): io.github.aedev.flow.data.model.SearchResult =
             withContext(Dispatchers.IO) {
                 try {
-                    val searchExtractor = service.getSearchExtractor(query, contentFilters, "")
+                    val searchExtractor =
+                        service.getSearchExtractor(
+                            query,
+                            SearchFilterResolver.resolveSearchContentFilters(service, contentFilters),
+                            emptyList(),
+                        )
                     searchExtractor.fetchPage()
 
                     // FIX: Correct Pagination Logic
@@ -1070,7 +1085,7 @@ class YouTubeRepository
             supervisorScope {
                 val embeddedAvatars =
                     items.map { item ->
-                        ThumbnailUrlResolver.resolveChannelAvatar(item.uploaderAvatars.bestImageUrl())
+                        ThumbnailUrlResolver.resolveChannelAvatar(item.uploaderAvatarUrl)
                     }
                 val uploaderReferences = items.map { item -> item.uploaderUrl.orEmpty().trim() }
                 val missingAvatarReferences =
@@ -1111,7 +1126,7 @@ class YouTubeRepository
                                 embeddedAvatar = embeddedAvatars[index],
                                 resolvedChannelAvatar = fallbackAvatars[uploaderReference],
                             ),
-                        text = item.commentText.content ?: "",
+                        text = item.commentText ?: "",
                         likeCount = item.likeCount.toInt(),
                         publishedTime = item.textualUploadDate ?: "",
                         replyCount = item.replyCount.toInt(),
@@ -1161,17 +1176,16 @@ class YouTubeRepository
                         }
 
                     val bestThumbnail =
-                        playlistInfo.thumbnails
-                            .sortedByDescending { it.height }
-                            .firstOrNull()
-                            ?.url ?: playlistVideos.firstOrNull()?.thumbnailUrl ?: ""
+                        playlistInfo.thumbnailUrl ?: playlistVideos.firstOrNull()?.thumbnailUrl ?: ""
 
                     io.github.aedev.flow.data.model.Playlist(
                         id = playlistId,
                         name = playlistInfo.name ?: "Unknown Playlist",
                         thumbnailUrl = bestThumbnail,
                         videoCount = playlistVideos.size,
-                        description = playlistInfo.description?.content ?: "",
+                        // PipePipeExtractor's PlaylistInfo dropped getDescription() entirely - no
+                        // fallback data available, accepted as always-empty for extractor-sourced playlists.
+                        description = "",
                         videos = playlistVideos,
                         isLocal = false,
                     )
@@ -1355,9 +1369,7 @@ class YouTubeRepository
             )
         }
 
-        private fun StreamInfoItem.isPaidOrMembersOnly(): Boolean =
-            contentAvailability == ContentAvailability.PAID ||
-                contentAvailability == ContentAvailability.MEMBERSHIP
+        private fun StreamInfoItem.isPaidOrMembersOnly(): Boolean = requiresMembership()
 
         /**
          * Extension function to convert StreamInfoItem to our Video model
@@ -1372,15 +1384,9 @@ class YouTubeRepository
                     else -> rawUrl.substringAfterLast("/")
                 }
 
-            val bestThumbnail =
-                thumbnails
-                    .sortedByDescending { it.height }
-                    .map { it.url }
-                    .firstOrNull()
-                    .let { ThumbnailUrlResolver.normalizeVideoThumbnail(videoId, it) }
+            val bestThumbnail = ThumbnailUrlResolver.normalizeVideoThumbnail(videoId, thumbnailUrl)
 
-            val avatarUrls = uploaderAvatars.distinctBestImageUrls()
-            val bestAvatar = avatarUrls.firstOrNull().orEmpty()
+            val bestAvatar = uploaderAvatarUrl.orEmpty()
 
             var durationSecs = if (duration > 0) duration.toInt() else 0
 
@@ -1443,7 +1449,7 @@ class YouTubeRepository
                         textualUploadDate,
                     ),
                 channelThumbnailUrl = bestAvatar,
-                channelThumbnailUrls = avatarUrls,
+                channelThumbnailUrls = listOfNotNull(uploaderAvatarUrl),
                 isUpcoming = streamType == StreamType.NONE,
                 isLive = isLiveStream,
                 isShort = isReel,
@@ -1455,11 +1461,7 @@ class YouTubeRepository
          * Extension function to convert ChannelInfoItem to our Channel model
          */
         private fun org.schabi.newpipe.extractor.channel.ChannelInfoItem.toChannel(): io.github.aedev.flow.data.model.Channel {
-            val bestThumbnail =
-                thumbnails
-                    .sortedByDescending { it.height }
-                    .firstOrNull()
-                    ?.url ?: ""
+            val bestThumbnail = thumbnailUrl ?: ""
 
             // Extract the channel ID properly from the URL
             val channelId =
@@ -1486,12 +1488,7 @@ class YouTubeRepository
          */
         private fun org.schabi.newpipe.extractor.playlist.PlaylistInfoItem.toPlaylist(): io.github.aedev.flow.data.model.Playlist {
             val playlistId = url.substringAfterLast("=")
-            val bestThumbnail =
-                thumbnails
-                    .sortedByDescending { it.height }
-                    .map { it.url }
-                    .firstOrNull()
-                    .let { ThumbnailUrlResolver.normalizeVideoThumbnail(playlistId, it) }
+            val bestThumbnail = ThumbnailUrlResolver.normalizeVideoThumbnail(playlistId, thumbnailUrl)
 
             return io.github.aedev.flow.data.model.Playlist(
                 id = playlistId,

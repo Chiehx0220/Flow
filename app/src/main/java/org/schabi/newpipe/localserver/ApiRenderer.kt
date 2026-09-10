@@ -42,8 +42,8 @@ object ApiRenderer {
         json.put("title", item.name ?: "")
         json.put("channelName", streamItem?.uploaderName ?: item.name ?: "")
         json.put("channelId", streamItem?.uploaderUrl ?: "")
-        json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(item.thumbnails))
-        json.put("channelThumbnailUrl", HtmlRendererCommon.getThumbnailUrl(streamItem?.uploaderAvatars))
+        json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(item.thumbnailUrl))
+        json.put("channelThumbnailUrl", HtmlRendererCommon.getThumbnailUrl(streamItem?.uploaderAvatarUrl))
         if (streamItem != null) {
             json.put("duration", streamItem.duration.coerceAtLeast(0).toInt())
             json.put("viewCount", streamItem.viewCount.coerceAtLeast(-1))
@@ -184,7 +184,7 @@ object ApiRenderer {
         val json = JSONObject()
         json.put("id", item.url)
         json.put("name", item.name ?: "")
-        json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(item.thumbnails))
+        json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(item.thumbnailUrl))
         json.put("subscriberCount", item.subscriberCount.coerceAtLeast(-1))
         json.put("url", item.url)
         return json
@@ -195,7 +195,7 @@ object ApiRenderer {
         val json = JSONObject()
         json.put("id", item.url)
         json.put("name", item.name ?: "")
-        json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(item.thumbnails))
+        json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(item.thumbnailUrl))
         json.put("videoCount", item.streamCount.coerceAtLeast(0).toInt())
         json.put("isLocal", false)
         return json
@@ -209,9 +209,9 @@ object ApiRenderer {
         // Empty, not the placeholder URL, when there's no real avatar.
         json.put(
             "authorThumbnail",
-            if (HtmlRendererCommon.hasThumbnail(item.uploaderAvatars)) HtmlRendererCommon.getThumbnailUrl(item.uploaderAvatars) else "",
+            if (HtmlRendererCommon.hasThumbnail(item.uploaderAvatarUrl)) HtmlRendererCommon.getThumbnailUrl(item.uploaderAvatarUrl) else "",
         )
-        json.put("text", item.commentText?.content ?: "")
+        json.put("text", item.commentText ?: "")
         json.put("likeCount", item.likeCount.coerceAtLeast(0))
         json.put("publishedTime", item.textualUploadDate ?: "")
         json.put("isPinned", item.isPinned)

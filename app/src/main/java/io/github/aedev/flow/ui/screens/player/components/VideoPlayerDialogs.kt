@@ -34,6 +34,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import io.github.aedev.flow.player.stream.isOriginalAudioTrack
 import org.schabi.newpipe.extractor.stream.VideoStream
 
 @Composable
@@ -174,24 +175,13 @@ fun DownloadQualityDialog(
                                             if (!preferredLang.isNullOrEmpty() && preferredLang != "original") {
                                                 val langMatches =
                                                     allAudio.filter {
-                                                        it.audioLocale?.language.equals(preferredLang, ignoreCase = true) ||
-                                                            it.audioLocale?.toLanguageTag().equals(preferredLang, ignoreCase = true)
+                                                        it.audioLocale.equals(preferredLang, ignoreCase = true) ||
+                                                            it.audioLocale?.startsWith(preferredLang, ignoreCase = true) == true
                                                     }
                                                 if (langMatches.isNotEmpty()) langMatches else allAudio
                                             } else {
-                                                val originals =
-                                                    allAudio.filter {
-                                                        it.audioTrackType == org.schabi.newpipe.extractor.stream.AudioTrackType.ORIGINAL
-                                                    }
-                                                if (originals.isNotEmpty()) {
-                                                    originals
-                                                } else {
-                                                    val nonDubbed =
-                                                        allAudio.filter {
-                                                            it.audioTrackType != org.schabi.newpipe.extractor.stream.AudioTrackType.DUBBED
-                                                        }
-                                                    if (nonDubbed.isNotEmpty()) nonDubbed else allAudio
-                                                }
+                                                val originals = allAudio.filter { it.isOriginalAudioTrack() }
+                                                if (originals.isNotEmpty()) originals else allAudio
                                             }
 
                                         val compatibleAudio =

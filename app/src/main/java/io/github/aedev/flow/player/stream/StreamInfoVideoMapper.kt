@@ -60,12 +60,7 @@ object StreamInfoVideoMapper {
             }.trim()
         if (videoId.isBlank()) throw IllegalArgumentException("Blank related video id")
 
-        val bestThumbnail =
-            thumbnails
-                .sortedByDescending { it.height }
-                .map { it.url }
-                .firstOrNull()
-                .let { ThumbnailUrlResolver.normalizeVideoThumbnail(videoId, it) }
+        val bestThumbnail = ThumbnailUrlResolver.normalizeVideoThumbnail(videoId, thumbnailUrl)
 
         val isReel = ShortsClassifier.isReel(this)
         val isLiveStream = streamType == StreamType.LIVE_STREAM
@@ -99,7 +94,7 @@ object StreamInfoVideoMapper {
             duration = durationSecs,
             viewCount = viewCount,
             uploadDate = textualUploadDate ?: "Unknown",
-            channelThumbnailUrl = uploaderAvatars.sortedByDescending { it.height }.firstOrNull()?.url ?: "",
+            channelThumbnailUrl = uploaderAvatarUrl ?: "",
             isUpcoming = streamType == StreamType.NONE,
             isLive = isLiveStream,
             isShort = isReel,

@@ -10,7 +10,7 @@ import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.channel.ChannelInfo
-import org.schabi.newpipe.extractor.channel.tabs.ChannelTabInfo
+import org.schabi.newpipe.extractor.channel.ChannelTabInfo
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 
@@ -87,7 +87,7 @@ class ChannelPlaylistsPagingSource(
         return Playlist(
             id = playlistId,
             name = this.name,
-            thumbnailUrl = this.thumbnails.firstOrNull()?.url ?: "",
+            thumbnailUrl = this.thumbnailUrl ?: "",
             videoCount = this.streamCount.toInt(),
             isLocal = false,
         )

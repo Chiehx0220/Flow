@@ -20,10 +20,9 @@ import kotlinx.coroutines.flow.flow
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.channel.ChannelInfo
-import org.schabi.newpipe.extractor.channel.tabs.ChannelTabInfo
-import org.schabi.newpipe.extractor.channel.tabs.ChannelTabs
+import org.schabi.newpipe.extractor.channel.ChannelTabInfo
+import org.schabi.newpipe.extractor.linkhandler.ChannelTabs
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
-import org.schabi.newpipe.extractor.stream.ContentAvailability
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.StreamType
 import java.util.Date
@@ -407,9 +406,9 @@ class RssSubscriptionService
                         ?.url
                         ?.let { ThumbnailUrlResolver.resolveChannelAvatar(it) }
 
-                val videosTab = channelInfo.tabs.find { it.contentFilters.contains(ChannelTabs.VIDEOS) }
-                val shortsTab = channelInfo.tabs.find { it.contentFilters.contains(ChannelTabs.SHORTS) }
-                val liveTab = channelInfo.tabs.find { it.contentFilters.contains(ChannelTabs.LIVESTREAMS) }
+                val videosTab = channelInfo.tabs.find { tab -> tab.contentFilters.any { it.name == ChannelTabs.VIDEOS } }
+                val shortsTab = channelInfo.tabs.find { tab -> tab.contentFilters.any { it.name == ChannelTabs.SHORTS } }
+                val liveTab = channelInfo.tabs.find { tab -> tab.contentFilters.any { it.name == ChannelTabs.LIVESTREAMS } }
 
                 if (videosTab == null && shortsTab == null && liveTab == null) {
                     Log.w(TAG, "[$channelId] No VIDEOS/SHORTS/LIVE tab found")
@@ -523,11 +522,7 @@ class RssSubscriptionService
             overrideTimestamp: Long? = null,
         ): Video {
             val videoId = extractVideoId(item.url)
-            val thumbnail =
-                ThumbnailUrlResolver.normalizeVideoThumbnail(
-                    videoId,
-                    item.thumbnails.maxByOrNull { it.width }?.url,
-                )
+            val thumbnail = ThumbnailUrlResolver.normalizeVideoThumbnail(videoId, item.thumbnailUrl)
 
             val uploadTimeMillis = overrideTimestamp ?: resolveUploadTimestamp(item) ?: 0L
 
@@ -576,9 +571,7 @@ class RssSubscriptionService
                 timestamp = uploadTimeMillis,
                 channelThumbnailUrl =
                     channelAvatar?.takeIf { it.isNotBlank() }
-                        ?: item.uploaderAvatars
-                            .maxByOrNull { it.height }
-                            ?.url
+                        ?: item.uploaderAvatarUrl
                             ?.let { ThumbnailUrlResolver.resolveChannelAvatar(it) }
                         ?: "",
                 isShort = forceShort || item.isLikelyShort(),
@@ -617,9 +610,7 @@ class RssSubscriptionService
         }
 
         private fun StreamInfoItem.isPaidOrMembersOnly(): Boolean {
-            if (contentAvailability == ContentAvailability.PAID ||
-                contentAvailability == ContentAvailability.MEMBERSHIP
-            ) {
+            if (requiresMembership()) {
                 return true
             }
             return containsRestrictionMarker(listOfNotNull(name, shortDescription).joinToString(" "))

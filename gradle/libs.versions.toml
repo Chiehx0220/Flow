@@ -12,10 +12,10 @@ coil = "3.5.0"
 composeReorderable = "3.1.0"
 hilt = "2.60.1"
 hiltNavigationCompose = "1.4.0"
-# Commit pin past v0.26.5, not yet tagged: fixes comment-avatar parsing for YouTube's newer
-# payload format (PR #1525, avatarThumbnailUrl fallback). Move to the next official tag once it
-# ships.
-newPipeExtractor = "e1853be2b0"
+# PipePipeExtractor fork (InfinityLoop1308/PipePipeExtractor), pinned commit — same pin used by
+# the sibling localtube/Fathom projects. Swaps off stock TeamNewPipe/NewPipeExtractor for
+# Bilibili support + upstream stability fixes. See ppe-ref clone for this commit's source.
+newPipeExtractor = "7919a1b9935638a1b9149ee556c42040d183b5e3"
 okhttp = "5.4.0"
 ktor = "3.5.2"
 kotlinxSerialization = "1.11.0"
@@ -72,7 +72,7 @@ coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp"
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
-newpipe-extractor = { group = "com.github.TeamNewPipe", name = "NewPipeExtractor", version.ref = "newPipeExtractor" }
+newpipe-extractor = { group = "com.github.InfinityLoop1308.PipePipeExtractor", name = "extractor", version.ref = "newPipeExtractor" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }

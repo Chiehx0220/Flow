@@ -92,7 +92,7 @@ object HtmlRendererWatch {
             val nextItem = info.relatedItems[0]
             nextVideoUrl = "/watch?serviceId=$serviceId&id=${nextItem.url}"
             nextVideoTitle = nextItem.name ?: ""
-            nextVideoThumb = HtmlRendererCommon.getThumbnailUrl(nextItem.thumbnails)
+            nextVideoThumb = HtmlRendererCommon.getThumbnailUrl(nextItem.thumbnailUrl)
         }
 
         val nextVideoUrlJs = HtmlRendererCommon.escapeJs(nextVideoUrl)
@@ -571,7 +571,7 @@ object HtmlRendererWatch {
                         var label = stream.audioTrackName
                         if (label.isNullOrEmpty()) {
                             val locale = stream.audioLocale
-                            label = locale?.displayName ?: "Audio Track"
+                            label = locale?.let { java.util.Locale.forLanguageTag(it.replace('_', '-')).displayName } ?: "Audio Track"
                         }
 
                         if (!first) tracksJson.append(",")
@@ -912,7 +912,7 @@ object HtmlRendererWatch {
             if (uploader == null) uploader = ""
             val uploaderEscaped = HtmlRendererCommon.escapeHtml(uploader)
             val relatedNameEscaped = HtmlRendererCommon.escapeHtml(related.name)
-            val relatedThumb = HtmlRendererCommon.getThumbnailUrl(related.thumbnails)
+            val relatedThumb = HtmlRendererCommon.getThumbnailUrl(related.thumbnailUrl)
 
             sb.append("        <div class=\"card\" style=\"margin-bottom:8px; flex-direction:row; gap:8px; height:94px; background:transparent; border:none; box-shadow:none; min-width:0; overflow:hidden;\">\n")
               .append("          <a href=\"/watch?serviceId=$serviceId&id=${related.url}\" style=\"flex-shrink:0; width:168px; height:94px; border-radius:8px; overflow:hidden; background:var(--card-thumbnail-bg);\">\n")
@@ -1067,7 +1067,7 @@ object HtmlRendererWatch {
             if (uploader == null) uploader = ""
             val uploaderEscaped = HtmlRendererCommon.escapeHtml(uploader)
             val relatedNameEscaped = HtmlRendererCommon.escapeHtml(related.name)
-            val relatedThumb = HtmlRendererCommon.getThumbnailUrl(related.thumbnails)
+            val relatedThumb = HtmlRendererCommon.getThumbnailUrl(related.thumbnailUrl)
 
             sb.append("        <div class=\"card\" style=\"margin-bottom:8px; flex-direction:row; gap:8px; height:94px; background:transparent; border:none; box-shadow:none;\">\n")
               .append("          <a href=\"/audio?serviceId=$serviceId&id=${related.url}\" style=\"flex-shrink:0; width:120px; height:80px; border-radius:12px; overflow:hidden; background:var(--card-thumbnail-bg);\">\n")
@@ -1119,13 +1119,13 @@ object HtmlRendererWatch {
             val authorEscaped = HtmlRendererCommon.escapeHtml(item.uploaderName)
             // Description.content is real HTML (<br>, <a href>), same as .media-description above
             // - not plain text, so it's rendered unescaped rather than double-escaped.
-            val commentTextHtml = item.commentText?.content ?: ""
+            val commentTextHtml = item.commentText ?: ""
             val timeText = HtmlRendererCommon.formatUploadDate(item.uploadDate, item.textualUploadDate ?: "")
             val likeCountText = if (item.likeCount > 0) HtmlRendererCommon.formatCount(item.likeCount.toLong()) else ""
 
             sb.append("<div class=\"comment\">\n")
-            if (HtmlRendererCommon.hasThumbnail(item.uploaderAvatars)) {
-                val avatarUrl = HtmlRendererCommon.getThumbnailUrl(item.uploaderAvatars)
+            if (HtmlRendererCommon.hasThumbnail(item.uploaderAvatarUrl)) {
+                val avatarUrl = HtmlRendererCommon.getThumbnailUrl(item.uploaderAvatarUrl)
                 sb.append("  <img class=\"comment-avatar\" src=\"$avatarUrl\">\n")
             } else {
                 // Extractor limitation, not fixable here - fall back to a colored initial instead
