@@ -31,7 +31,6 @@ import java.io.OutputStream
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.URLDecoder
-import java.util.Collections
 import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.Callable
@@ -63,9 +62,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         @Volatile
         private var wsServer: RemoteWebSocketServer? = null
         private val pendingCommands = java.util.concurrent.LinkedBlockingQueue<String>()
-        private val shortsCache: MutableList<StreamInfoItem> = Collections.synchronizedList(ArrayList())
-        private var isCacheWorkerRunning = false
-        private var lastCacheTime: Long = 0
 
         @JvmStatic
         fun getConnectedClients(): List<ClientInfo> {
@@ -381,133 +377,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             return extractor
         }
 
-        @JvmStatic
-        fun buildAndScoreShortsPool(serviceId: Int, dbHelper: HistoryDbHelper): List<StreamInfoItem> {
-            val pool = ArrayList<StreamInfoItem>()
-            val watchedIds = HashSet<String>()
-            try {
-                for (url in dbHelper.nativeWatchedUrls()) {
-                    watchedIds.add(getVideoId(url))
-                }
-            } catch (e: Exception) {
-                log("Error getting history for shorts ID checking: " + e.message)
-            }
-
-            try {
-                val addedIds = HashSet<String>()
-
-                // Part 1: trending + FlowNeuro discovery, ranked - see buildShortsCandidates().
-                try {
-                    for (item in dbHelper.buildShortsCandidates(serviceId)) {
-                        val vidId = getVideoId(item.url)
-                        if (!watchedIds.contains(vidId) && !addedIds.contains(vidId)) {
-                            pool.add(item)
-                            addedIds.add(vidId)
-                        }
-                    }
-                } catch (e: Exception) {
-                    log("Shorts pool candidate fetch error: " + e.message)
-                }
-
-                // Part 2: subscription Shorts, native two-tier queue (RSS cache + per-channel
-                // Shorts-tab walk) - see buildSubscriptionShortsPool(). Replaces the old
-                // random-channel "videos"-tab scrape, which wasn't even fetching the Shorts tab.
-                try {
-                    for (item in dbHelper.buildSubscriptionShortsPool(serviceId)) {
-                        val vidId = getVideoId(item.url)
-                        if (!watchedIds.contains(vidId) && !addedIds.contains(vidId)) {
-                            pool.add(item)
-                            addedIds.add(vidId)
-                        }
-                    }
-                } catch (e: Exception) {
-                    log("Shorts pool subscription fetch error: " + e.message)
-                }
-
-                // Shuffle the mixed feed
-                Collections.shuffle(pool)
-
-            } catch (e: Exception) {
-                log("Shorts Pool builder global error: " + e.message)
-            }
-            return pool
-        }
-
-        @JvmStatic
-        @JvmOverloads
-        fun refillingCache(serviceId: Int, dbHelper: HistoryDbHelper, executorService: ExecutorService, initialId: String? = null) {
-            synchronized(shortsCache) {
-                if (isCacheWorkerRunning) return
-                isCacheWorkerRunning = true
-            }
-            executorService.submit {
-                try {
-                    log("Starting background Shorts cache refilling...")
-                    val newCandidates = ArrayList<StreamInfoItem>()
-
-                    if (!initialId.isNullOrEmpty()) {
-                        try {
-                            val service = NewPipe.getService(serviceId)
-                            val fullVideoUrl = "https://www.youtube.com/watch?v=$initialId"
-                            val info = StreamInfo.getInfo(service, fullVideoUrl)
-                            val item = StreamInfoItem(serviceId, info.url, info.name, info.streamType)
-                            item.setUploaderName(info.uploaderName)
-                            item.setUploaderUrl(info.uploaderUrl)
-                            item.setDuration(info.duration)
-                            item.setThumbnails(info.thumbnails)
-                            newCandidates.add(item)
-                        } catch (e: Exception) {
-                            log("Error pre-populating specific short: " + e.message)
-                        }
-                    }
-
-                    newCandidates.addAll(buildAndScoreShortsPool(serviceId, dbHelper))
-
-                    synchronized(shortsCache) {
-                        val existingIds = HashSet<String>()
-                        for (item in shortsCache) {
-                            existingIds.add(getVideoId(item.url))
-                        }
-                        for (item in newCandidates) {
-                            val vidId = getVideoId(item.url)
-                            if (!existingIds.contains(vidId)) {
-                                shortsCache.add(item)
-                                existingIds.add(vidId)
-                            }
-                        }
-                        lastCacheTime = System.currentTimeMillis()
-                        log("Shorts cache refilled. Current size: " + shortsCache.size)
-                    }
-                } catch (e: Exception) {
-                    log("Error refilling Shorts cache: " + e.message)
-                } finally {
-                    synchronized(shortsCache) {
-                        isCacheWorkerRunning = false
-                    }
-                }
-            }
-        }
-
-        @JvmStatic
-        fun fetchQuickFallback(serviceId: Int): List<StreamInfoItem> {
-            val quickList = ArrayList<StreamInfoItem>()
-            try {
-                val service = NewPipe.getService(serviceId)
-                val extractor = getDefaultSearchExtractor(service, "shorts")
-                extractor.fetchPage()
-                val page = extractor.initialPage
-                if (page != null && page.items != null) {
-                    for (itemObj in page.items) {
-                        if (itemObj is StreamInfoItem) {
-                            quickList.add(itemObj)
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                log("Quick fallback fetch error: " + e.message)
-            }
-            return quickList
-        }
     }
 
     private var serverSocket: ServerSocket? = null
@@ -527,13 +396,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             val server = RemoteWebSocketServer(8081)
             wsServer = server
             server.start()
-        }
-
-        // Pre-fill Shorts cache in background immediately on server start
-        val defaultServiceId = 0 // YouTube
-        threadPool.submit {
-            log("Pre-filling Shorts cache on server start...")
-            refillingCache(defaultServiceId, dbHelper, threadPool)
         }
 
         threadPool.execute {
@@ -730,12 +592,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                                 handleStaticCss(os)
                             } else if (path == "/static/script.js") {
                                 handleStaticJs(os)
-                            } else if (path == "/shorts") {
-                                handleShortsPage(os, params, isTv)
-                            } else if (path == "/api/shorts/feed") {
-                                handleShortsApiFeed(os, params)
-                            } else if (path == "/api/shorts/refresh") {
-                                handleShortsApiRefresh(os, params)
                             } else if (path == "/settings") {
                                 handleSettings(os, params, isTv)
                             } else if (path == "/watch-later") {
@@ -1241,24 +1097,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         private fun handleWatch(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
             val serviceId = getServiceId(params)
             val mediaUrl = params["id"]
-
-            if (mediaUrl != null && (mediaUrl.contains("/shorts/") || mediaUrl.contains("youtube.com/shorts"))) {
-                var videoId = mediaUrl
-                if (mediaUrl.contains("/shorts/")) {
-                    val idx = mediaUrl.indexOf("/shorts/")
-                    videoId = mediaUrl.substring(idx + 8)
-                    if (videoId.contains("?")) {
-                        videoId = videoId.substring(0, videoId.indexOf("?"))
-                    }
-                }
-                val redirectHeader = "HTTP/1.1 302 Found\r\n" +
-                        "Location: /shorts?id=" + android.net.Uri.encode(videoId) + "\r\n" +
-                        "Content-Length: 0\r\n" +
-                        "Connection: close\r\n\r\n"
-                os.write(redirectHeader.toByteArray(Charsets.UTF_8))
-                os.flush()
-                return
-            }
 
             // Immediately send the fast watch skeleton layout
             val html = HtmlRenderer.renderWatchSkeleton(serviceId, mediaUrl, isTv)
@@ -2607,89 +2445,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             } else {
                 sendRedirect(os, "/?serviceId=$serviceId")
             }
-        }
-
-        @Throws(Exception::class)
-        private fun handleShortsPage(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
-            val serviceId = getServiceId(params)
-            val initialId = params["id"]
-            synchronized(shortsCache) {
-                shortsCache.clear()
-                lastCacheTime = 0
-            }
-            refillingCache(serviceId, dbHelper, executorService, initialId)
-            val html = HtmlRenderer.renderShortsPage(serviceId, isTv)
-            sendResponse(os, 200, html, "text/html; charset=UTF-8")
-        }
-
-        @Throws(Exception::class)
-        private fun handleShortsApiRefresh(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            synchronized(shortsCache) {
-                shortsCache.clear()
-                lastCacheTime = 0 // force refill
-            }
-            log("Shorts cache cleared by user refresh request.")
-            refillingCache(serviceId, dbHelper, executorService)
-            sendResponse(os, 200, "{\"status\":\"refreshing\"}", "application/json; charset=UTF-8")
-        }
-
-        @Throws(Exception::class)
-        private fun handleShortsApiFeed(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            var pageIndex = 0
-            try {
-                pageIndex = params.getOrDefault("page", "0").toInt()
-            } catch (ignored: Exception) {
-            }
-            val pageSize = 5
-
-            // If cache is nearly exhausted, trigger a background refill (non-blocking)
-            synchronized(shortsCache) {
-                if (shortsCache.size < (pageIndex + 2) * pageSize
-                    || System.currentTimeMillis() - lastCacheTime > 600_000) {
-                    refillingCache(serviceId, dbHelper, executorService)
-                }
-            }
-
-            // If the cache is still empty (background fetch hasn't finished yet), tell the UI to show a spinner
-            var isLoading: Boolean
-            synchronized(shortsCache) {
-                isLoading = shortsCache.isEmpty()
-            }
-            if (isLoading) {
-                sendResponse(os, 200, "{\"items\":[],\"loading\":true}", "application/json; charset=UTF-8")
-                return
-            }
-
-            // Serve items from the cache at the requested page offset
-            val shortsItems = ArrayList<StreamInfoItem>()
-            synchronized(shortsCache) {
-                val start = pageIndex * pageSize
-                val end = Math.min(start + pageSize, shortsCache.size)
-                if (start < shortsCache.size) {
-                    for (i in start until end) {
-                        shortsItems.add(shortsCache[i])
-                    }
-                }
-            }
-
-            val json = StringBuilder()
-            json.append("{\"items\":[")
-            for (i in shortsItems.indices) {
-                val item = shortsItems[i]
-                json.append("{")
-                    .append("\"url\":\"").append(escapeJson(item.url)).append("\",")
-                    .append("\"name\":\"").append(escapeJson(item.name)).append("\",")
-                    .append("\"uploaderName\":\"").append(escapeJson(item.uploaderName)).append("\",")
-                    .append("\"uploaderUrl\":\"").append(escapeJson(item.uploaderUrl)).append("\",")
-                    .append("\"duration\":").append(item.duration).append(",")
-                    .append("\"thumbnailUrl\":\"").append(escapeJson(HtmlRendererCommon.getThumbnailUrl(item.thumbnails))).append("\"")
-                    .append("}")
-                if (i < shortsItems.size - 1) json.append(",")
-            }
-            json.append("]}")
-            sendResponse(os, 200, json.toString(), "application/json; charset=UTF-8")
         }
 
         private fun escapeJson(input: String?): String {

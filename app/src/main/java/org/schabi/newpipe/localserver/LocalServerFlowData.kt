@@ -10,14 +10,11 @@ import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.model.Video as FlowVideo
-import io.github.aedev.flow.data.model.toVideo
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.recommendation.InteractionType
 import io.github.aedev.flow.data.recommendation.UserBrain
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.shorts.ChannelReelIndex
-import io.github.aedev.flow.data.shorts.queue.SubscriptionDeepShortsLoader
-import io.github.aedev.flow.data.shorts.queue.SubscriptionShortsLoader
 import io.github.aedev.flow.player.PlayerRelatedVideosPolicy
 import io.github.aedev.flow.ui.screens.home.FeedTasteProfile
 import io.github.aedev.flow.ui.screens.home.GraphCandidate
@@ -511,8 +508,7 @@ private suspend fun HistoryDbHelper.buildHomeFeedContext(): HomeFeedContext {
 }
 
 /** Dedupes by video id (first occurrence wins), ranks via FlowNeuroEngine (falls back to
- * unranked order on failure), converts to [StreamInfoItem]. Shared tail of
- * [continueDiscoveryFeed] and [buildShortsCandidates]. */
+ * unranked order on failure), converts to [StreamInfoItem]. Used by [continueDiscoveryFeed]. */
 private suspend fun HistoryDbHelper.rankAndConvert(videos: List<FlowVideo>, serviceId: Int): List<StreamInfoItem> {
     val deduped = LinkedHashMap<String, FlowVideo>()
     for (v in videos) if (v.id.isNotBlank()) deduped.putIfAbsent(v.id, v)
@@ -687,72 +683,17 @@ fun HistoryDbHelper.continueDiscoveryFeed(serviceId: Int): Pair<List<InfoItem>, 
     result to result.isNotEmpty()
 }
 
-// 5-min TTL cache for buildShortsCandidates(), keyed by serviceId.
-private const val SHORTS_POOL_CACHE_TTL_MS = 5 * 60 * 1000L
-private data class ShortsPoolCacheEntry(val items: List<StreamInfoItem>, val timestampMs: Long)
-private val shortsPoolCache = java.util.concurrent.ConcurrentHashMap<Int, ShortsPoolCacheEntry>()
-
-/** Trending + a round of FlowNeuro discovery queries, ranked via FlowNeuroEngine - the Shorts
- * feed's counterpart to [buildAndRankHomeFeed]. Replaces the old preferred-keywords search
- * branch in `buildAndScoreShortsPool()`: `preferredKeywords` has no settings-page UI to ever set
- * it, so that branch never actually ran. */
-fun HistoryDbHelper.buildShortsCandidates(serviceId: Int): List<StreamInfoItem> = runBlocking {
-    val cached = shortsPoolCache[serviceId]
-    val now = System.currentTimeMillis()
-    if (cached != null && now - cached.timestampMs < SHORTS_POOL_CACHE_TTL_MS) {
-        return@runBlocking cached.items
-    }
-
-    ensureFlowNeuroInitialized()
-    val repo = youTubeRepository()
-
-    val pool = mutableListOf<FlowVideo>()
-    supervisorScope {
-        val trendingDeferred = async { runCatching { repo.getTrendingVideos("").first }.getOrDefault(emptyList()) }
-        val discoveryDeferred = async { fetchDiscoveryVideos(repo, resetDepth = false) }
-        pool += discoveryDeferred.await()
-        pool += trendingDeferred.await()
-    }
-
-    val result = rankAndConvert(pool, serviceId)
-    shortsPoolCache[serviceId] = ShortsPoolCacheEntry(result, now)
-    result
-}
-
-/** Subscription-based Shorts pool - two-tier, mirrors native's own ShortsQueueLoaderFactory:
- * SubscriptionShortsLoader first (RSS-cache-only, no network call), then
- * SubscriptionDeepShortsLoader (walks each channel's actual Shorts tab) as a supplement. Replaces
- * the old random-channel "videos"-tab scrape in `buildAndScoreShortsPool()`'s Part 2, which wasn't
- * even fetching the Shorts tab and let long-form uploads leak into the Shorts pool. One
- * `.initial()` call per tier, not full pagination - this is a one-shot pool build for a single
- * HTTP response, not an interactive infinite-scroll queue (matches the old Part 2's own "just 5
- * channels" scope, just fetching the right tab this time). */
-fun HistoryDbHelper.buildSubscriptionShortsPool(serviceId: Int): List<StreamInfoItem> = runBlocking {
-    val entryPoint = localServerEntryPoint(appContext)
-    val feedRepo = entryPoint.subscriptionFeedRepository()
-    val watchedVideos = entryPoint.subscriptionWatchedVideos()
-    val prefs = playerPreferences()
-
-    val pool = LinkedHashMap<String, FlowVideo>()
-    supervisorScope {
-        val shallowDeferred = async {
-            runCatching {
-                SubscriptionShortsLoader(feedRepo, prefs, watchedVideos, anchorVideoId = null).initial().items
-            }.getOrDefault(emptyList())
-        }
-        val deepDeferred = async {
-            runCatching {
-                SubscriptionDeepShortsLoader(feedRepo, subscriptionRepository(), prefs, watchedVideos).initial().items
-            }.getOrDefault(emptyList())
-        }
-        (shallowDeferred.await() + deepDeferred.await()).forEach { short ->
-            val video = short.toVideo()
-            if (video.id.isNotBlank()) pool.putIfAbsent(video.id, video)
-        }
-    }
-
-    pool.values.map { it.toStreamInfoItem(serviceId) }
-}
+// NOTE (2026-09): Local Server's Shorts/Reels feed was removed entirely (UI, routes, and this
+// pipeline) - too many structural bugs to be worth patching further (global cache not partitioned
+// by serviceId, two disconnected cache layers kept in sync only by convention, subscription pool
+// only ever fetched once per session, a polling protocol coupled to a global refill lock). If this
+// gets rebuilt, treat it as a fresh design, not a resume of the old one. For reference, the native
+// Shorts screen's own data source is [io.github.aedev.flow.data.shorts.ShortsRepository]
+// (`getShortsFeed()` for the InnerTube fast path + continuation token, `loadMore()` to page it) and
+// [io.github.aedev.flow.data.shorts.ShortsDiscoveryEngine] (`getDiscoveryShorts()` for subscription
+// + #shorts-query discovery, gated in native on `awaitFirstPlaybackResolved()` - a signal a
+// one-shot HTTP handler has no equivalent of, so any rebuild needs its own answer to "when do I
+// fetch more" rather than borrowing native's playback-driven trigger).
 
 /** Real trending kiosk, unranked - used by handleApiHome()'s "raw" JSON feed (as opposed to
  * handleApiRecommendations(), which uses [buildAndRankHomeFeed]'s FlowNeuro-ranked pool). No

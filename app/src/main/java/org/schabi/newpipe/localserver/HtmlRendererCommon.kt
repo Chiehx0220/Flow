@@ -248,7 +248,6 @@ object HtmlRendererCommon {
     fun getHeaderHtml(activeServiceId: Int, query: String?, activeTab: String = "youtube"): String {
         val sb = StringBuilder()
         val ytActive = if (activeTab == "youtube") "active" else ""
-        val shortsActive = if (activeTab == "shorts") "active" else ""
         val histActive = if (activeTab == "history") "active" else ""
         val subsActive = if (activeTab == "subscriptions") "active" else ""
         val settingsActive = if (activeTab == "settings") "active" else ""
@@ -277,7 +276,6 @@ object HtmlRendererCommon {
 
         sb.append("<div class=\"sidebar-nav\">\n")
         appendNavItem(sb, "sidebar-item", "sidebar-icon", true, "/?serviceId=$activeServiceId", ytActive, "home", "Home")
-        appendNavItem(sb, "sidebar-item", "sidebar-icon", true, "/shorts", shortsActive, "smart_display", "Reels")
         appendNavItem(sb, "sidebar-item", "sidebar-icon", true, "/subscriptions", subsActive, "subscriptions", "Subscriptions")
         appendNavItem(sb, "sidebar-item", "sidebar-icon", true, "/history", histActive, "history", "History")
         appendNavItem(sb, "sidebar-item", "sidebar-icon", true, "/settings", settingsActive, "settings", "Settings")
@@ -286,7 +284,6 @@ object HtmlRendererCommon {
         // Same items as the sidebar above, minus History (less room on a phone-width bottom bar).
         sb.append("<div class=\"bottom-nav\">\n")
         appendNavItem(sb, "bottom-nav-item", "bottom-nav-icon", false, "/?serviceId=$activeServiceId", ytActive, "home", "Home")
-        appendNavItem(sb, "bottom-nav-item", "bottom-nav-icon", false, "/shorts", shortsActive, "smart_display", "Reels")
         appendNavItem(sb, "bottom-nav-item", "bottom-nav-icon", false, "/subscriptions", subsActive, "subscriptions", "Subscriptions")
         appendNavItem(sb, "bottom-nav-item", "bottom-nav-icon", false, "/settings", settingsActive, "settings", "Settings")
         sb.append("</div>\n")
@@ -436,14 +433,7 @@ object HtmlRendererCommon {
                     typeBadge = "👤 Channel"
                     "/channel?serviceId=$itemServiceId&id=${item.url}"
                 }
-                else -> {
-                    if (item is StreamInfoItem && item.duration > 0 && item.duration <= 120) {
-                        val vidId = LocalHttpServer.getVideoId(item.url)
-                        "/shorts?serviceId=$itemServiceId&id=$vidId"
-                    } else {
-                        "/watch?serviceId=$itemServiceId&id=${item.url}"
-                    }
-                }
+                else -> "/watch?serviceId=$itemServiceId&id=${item.url}"
             }
 
             if (item.infoType == InfoItem.InfoType.CHANNEL) {
@@ -641,7 +631,12 @@ object HtmlRendererCommon {
         val action = if (isWatchLater) "remove" else "add"
         val cls = if (isWatchLater) "action-pill-btn watch-later-btn added" else "action-pill-btn watch-later-btn"
         val label = if (isWatchLater) "Saved" else "Watch Later"
-        val icon = if (isWatchLater) "✓ " else "🕐 "
+        val icon =
+            if (isWatchLater) {
+                "<span class=\"material-symbols-rounded\" style=\"font-size:18px;\">check</span>"
+            } else {
+                "<span class=\"material-symbols-rounded\" style=\"font-size:18px;\">schedule</span>"
+            }
         val thumb = getThumbnailUrl(info.thumbnails)
 
         val urlEncoded = encodeUrl(info.url)

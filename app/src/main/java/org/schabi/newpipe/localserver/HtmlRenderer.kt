@@ -9,7 +9,7 @@ import org.schabi.newpipe.extractor.playlist.PlaylistExtractor
 import org.schabi.newpipe.extractor.stream.StreamInfo
 
 // Thin facade over the page-specific HtmlRenderer* files (HtmlRendererCommon, HtmlRendererListings,
-// HtmlRendererWatch, HtmlRendererChannel, HtmlRendererSettings, HtmlRendererShorts) that this file
+// HtmlRendererWatch, HtmlRendererChannel, HtmlRendererSettings) that this file
 // used to contain directly. Kept as a facade - rather than
 // updating every LocalHttpServer.java/ServerService.java call site to the new class names -
 // so every existing "HtmlRenderer.xxx(...)" call in the rest of the app keeps working unchanged.
@@ -87,7 +87,4 @@ object HtmlRenderer {
     @JvmStatic
     fun renderSettings(serviceId: Int, currentQuality: String, hideWatched: Boolean, hideShorts: Boolean, homeFeedMode: String, saved: Boolean, isTv: Boolean): String =
         HtmlRendererSettings.renderSettings(serviceId, currentQuality, hideWatched, hideShorts, homeFeedMode, saved, isTv)
-
-    @JvmStatic
-    fun renderShortsPage(serviceId: Int, isTv: Boolean): String = HtmlRendererShorts.renderShortsPage(serviceId, isTv)
 }
