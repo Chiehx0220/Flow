@@ -36,6 +36,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -951,6 +952,213 @@ fun SettingsScreen(
                 }
 
                 // =================================================
+                // 🌐 LOCAL SERVER (FLOW EXCLUSIVE FEATURE)
+                // =================================================
+                item {
+                    Text(
+                        text = stringResource(R.string.settings_header_local_server),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 8.dp),
+                    )
+                }
+                item {
+                    val localServerAddress =
+                        remember(localServerEnabled) {
+                            if (localServerEnabled) {
+                                org.schabi.newpipe.localserver.ServerService.getLocalIpAddress()?.let { ip ->
+                                    "http://$ip:${org.schabi.newpipe.localserver.ServerService.PORT}"
+                                }
+                            } else {
+                                null
+                            }
+                        }
+                    val openLocalServer: () -> Unit = {
+                        val ip = org.schabi.newpipe.localserver.ServerService.getLocalIpAddress() ?: "127.0.0.1"
+                        val url = "http://$ip:${org.schabi.newpipe.localserver.ServerService.PORT}"
+                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                        context.startActivity(intent)
+                    }
+                    // "Smoky" here is a finish, not a fixed hue: take the ACTIVE theme's own
+                    // primary/primaryContainer (the same pair Flow Engine's card uses) and mute
+                    // them - lower saturation, slightly darker. Default theme (red) reads as smoky
+                    // red/dusty rose; a green theme reads as smoky green, etc. - always the current
+                    // theme's color family, just with a dustier finish than Flow Engine's card.
+                    val themePrimary = MaterialTheme.colorScheme.primary
+                    val themePrimaryContainer = MaterialTheme.colorScheme.primaryContainer
+                    val localServerAccentDark = remember(themePrimary) { smokyVariant(themePrimary) }
+                    val localServerAccentLight = remember(themePrimaryContainer) { smokyVariant(themePrimaryContainer) }
+                    val onLocalServerAccent = Color.White
+
+                    Card(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .clickable(enabled = localServerEnabled, onClick = openLocalServer),
+                        shape = RoundedCornerShape(24.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                    ) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 180.dp),
+                        ) {
+                            // 1. Background Layer (Gradient)
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .matchParentSize()
+                                        .background(
+                                            brush =
+                                                Brush.linearGradient(
+                                                    colors = listOf(localServerAccentDark, localServerAccentLight),
+                                                ),
+                                        ),
+                            )
+                            // 2. Background Decor (Abstract Shapes)
+                            Canvas(modifier = Modifier.matchParentSize()) {
+                                drawCircle(
+                                    color = Color.White.copy(alpha = 0.1f),
+                                    radius = size.width * 0.5f,
+                                    center = Offset(size.width, 0f),
+                                )
+                                drawCircle(
+                                    color = Color.Black.copy(alpha = 0.05f),
+                                    radius = size.width * 0.3f,
+                                    center = Offset(0f, size.height),
+                                )
+                            }
+
+                            // 3. Huge Emoji Icon (Watermark style, matching the Flow persona card)
+                            Text(
+                                text = "📡", // 📡
+                                fontSize = 120.sp,
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .offset(x = 20.dp, y = 20.dp)
+                                        .alpha(0.15f),
+                            )
+
+                            // 4. Main Content
+                            Column(
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .padding(20.dp),
+                                verticalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                // Header Row
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.Top,
+                                ) {
+                                    // Status Badge
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.2f),
+                                        shape = RoundedCornerShape(8.dp),
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        ) {
+                                            Box(
+                                                modifier =
+                                                    Modifier
+                                                        .size(6.dp)
+                                                        .background(
+                                                            color =
+                                                                if (localServerEnabled) {
+                                                                    Color(0xFF4CAF50)
+                                                                } else {
+                                                                    onLocalServerAccent.copy(alpha = 0.5f)
+                                                                },
+                                                            shape = CircleShape,
+                                                        ),
+                                            )
+                                            Spacer(Modifier.width(6.dp))
+                                            Text(
+                                                text =
+                                                    if (localServerEnabled) {
+                                                        stringResource(R.string.settings_local_server_status_online)
+                                                    } else {
+                                                        stringResource(R.string.settings_local_server_status_offline)
+                                                    },
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = onLocalServerAccent,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                        }
+                                    }
+
+                                    // Power Switch
+                                    Switch(
+                                        checked = localServerEnabled,
+                                        onCheckedChange = { enabled ->
+                                            coroutineScope.launch {
+                                                playerPreferences.setLocalServerEnabled(enabled)
+                                            }
+                                            if (enabled) {
+                                                org.schabi.newpipe.localserver.ServerService.start(context)
+                                            } else {
+                                                org.schabi.newpipe.localserver.ServerService.stop(context)
+                                            }
+                                        },
+                                        colors =
+                                            SwitchDefaults.colors(
+                                                checkedThumbColor = onLocalServerAccent,
+                                                checkedTrackColor = onLocalServerAccent.copy(alpha = 0.5f),
+                                            ),
+                                    )
+                                }
+
+                                // Server Info
+                                Column {
+                                    Text(
+                                        text = stringResource(R.string.settings_item_local_server),
+                                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black),
+                                        color = onLocalServerAccent,
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        text = localServerAddress ?: stringResource(R.string.settings_item_local_server_subtitle),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = onLocalServerAccent.copy(alpha = 0.9f),
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+
+                                // Bottom CTA
+                                if (localServerEnabled) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = stringResource(R.string.settings_local_server_open_browser),
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = onLocalServerAccent,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+                                        Spacer(Modifier.width(4.dp))
+                                        Icon(
+                                            Icons.Default.ArrowForward,
+                                            contentDescription = null,
+                                            tint = onLocalServerAccent,
+                                            modifier = Modifier.size(16.dp),
+                                        )
+                                    }
+                                } else {
+                                    Spacer(Modifier.height(1.dp))
+                                }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+
+                // =================================================
                 // APPEARANCE
                 // =================================================
                 item { SectionHeader(text = stringResource(R.string.settings_header_appearance)) }
@@ -1128,75 +1336,6 @@ fun SettingsScreen(
                             subtitle = REGION_NAMES[currentRegion] ?: currentRegion,
                             onClick = { showRegionDialog = true },
                         )
-                        HorizontalDivider(
-                            Modifier.padding(start = 56.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        )
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Dns,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Spacer(Modifier.width(16.dp))
-                            val localServerAddress =
-                                remember(localServerEnabled) {
-                                    if (localServerEnabled) {
-                                        org.schabi.newpipe.localserver.ServerService.getLocalIpAddress()?.let { ip ->
-                                            "http://$ip:${org.schabi.newpipe.localserver.ServerService.PORT}"
-                                        }
-                                    } else {
-                                        null
-                                    }
-                                }
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.settings_item_local_server),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                )
-                                Text(
-                                    text = localServerAddress ?: stringResource(R.string.settings_item_local_server_subtitle),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            Switch(
-                                checked = localServerEnabled,
-                                onCheckedChange = { enabled ->
-                                    coroutineScope.launch {
-                                        playerPreferences.setLocalServerEnabled(enabled)
-                                    }
-                                    if (enabled) {
-                                        org.schabi.newpipe.localserver.ServerService.start(context)
-                                    } else {
-                                        org.schabi.newpipe.localserver.ServerService.stop(context)
-                                    }
-                                },
-                            )
-                        }
-                        if (localServerEnabled) {
-                            HorizontalDivider(
-                                Modifier.padding(start = 56.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            )
-                            SettingsItem(
-                                icon = Icons.Outlined.OpenInBrowser,
-                                title = stringResource(R.string.settings_item_open_local_server),
-                                subtitle = stringResource(R.string.settings_item_open_local_server_subtitle),
-                                onClick = {
-                                    val ip = org.schabi.newpipe.localserver.ServerService.getLocalIpAddress() ?: "127.0.0.1"
-                                    val url = "http://$ip:${org.schabi.newpipe.localserver.ServerService.PORT}"
-                                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
-                                    context.startActivity(intent)
-                                },
-                            )
-                        }
                     }
                 }
 
@@ -1511,6 +1650,22 @@ fun SettingsScreen(
             listMaxHeight = 260.dp,
         )
     }
+}
+
+/**
+ * Mutes [base] into its "smoky" finish - lower saturation, slightly darker - while keeping its
+ * hue, so it always tracks whichever theme color is passed in instead of a fixed color.
+ */
+private fun smokyVariant(
+    base: Color,
+    saturationFactor: Float = 0.55f,
+    valueFactor: Float = 0.9f,
+): Color {
+    val hsv = FloatArray(3)
+    android.graphics.Color.colorToHSV(base.toArgb(), hsv)
+    hsv[1] = (hsv[1] * saturationFactor).coerceIn(0f, 1f)
+    hsv[2] = (hsv[2] * valueFactor).coerceIn(0f, 1f)
+    return Color(android.graphics.Color.HSVToColor(hsv))
 }
 
 private fun getThemeNameRes(theme: ThemeMode): Int =
