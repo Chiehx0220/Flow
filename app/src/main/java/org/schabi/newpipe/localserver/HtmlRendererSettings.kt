@@ -9,7 +9,7 @@ object HtmlRendererSettings {
         sb.append(HtmlRendererCommon.getHeaderHtml(serviceId, "", "settings"))
         sb.append("<div class=\"container\">\n")
           .append("  <div class=\"settings-card\">\n")
-          .append("    <h1 class=\"settings-title\">⚙️ Preferences &amp; Backup</h1>\n")
+          .append("    <h1 class=\"settings-title\"><span class=\"material-symbols-rounded\" style=\"font-size:22px; vertical-align:-4px; margin-right:6px;\">settings</span>Preferences</h1>\n")
           .append("      <div class=\"settings-section\">\n")
           .append("        <h3 class=\"settings-section-title\">Filter Settings</h3>\n")
           .append("        <div class=\"setting-row\">\n")

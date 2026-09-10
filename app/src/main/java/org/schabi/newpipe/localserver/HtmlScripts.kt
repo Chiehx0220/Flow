@@ -782,19 +782,19 @@ object HtmlScripts {
                 "            \n" +
                 "            if (isSaved) {\n" +
                 "                btn.classList.remove('added');\n" +
-                "                btn.innerHTML = '🕐 Watch Later';\n" +
+                "                btn.innerHTML = '<span class=\"material-symbols-rounded\" style=\"font-size:18px;\">schedule</span>Watch Later';\n" +
                 "            } else {\n" +
                 "                btn.classList.add('added');\n" +
-                "                btn.innerHTML = '✓ Saved';\n" +
+                "                btn.innerHTML = '<span class=\"material-symbols-rounded\" style=\"font-size:18px;\">check</span>Saved';\n" +
                 "            }\n" +
                 "            \n" +
                 "            fetch(qs).catch(() => {\n" +
                 "                if (isSaved) {\n" +
                 "                    btn.classList.add('added');\n" +
-                "                    btn.innerHTML = '✓ Saved';\n" +
+                "                    btn.innerHTML = '<span class=\"material-symbols-rounded\" style=\"font-size:18px;\">check</span>Saved';\n" +
                 "                } else {\n" +
                 "                    btn.classList.remove('added');\n" +
-                "                    btn.innerHTML = '🕐 Watch Later';\n" +
+                "                    btn.innerHTML = '<span class=\"material-symbols-rounded\" style=\"font-size:18px;\">schedule</span>Watch Later';\n" +
                 "                }\n" +
                 "            });\n" +
                 "        }\n" +

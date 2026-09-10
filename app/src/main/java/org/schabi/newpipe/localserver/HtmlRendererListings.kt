@@ -84,11 +84,11 @@ object HtmlRendererListings {
         sb.append("<div class=\"container\">\n")
 
         if (items == null || items.isEmpty()) {
-            sb.append("  <h2 style=\"margin-bottom: 20px; font-weight: 700;\">📜 Watch History</h2>\n")
+            sb.append("  <h2 style=\"margin-bottom: 20px; font-weight: 700;\"><span class=\"material-symbols-rounded\" style=\"font-size:22px; vertical-align:-4px; margin-right:6px;\">history</span>Watch History</h2>\n")
               .append("<div class=\"loading-placeholder\">Your watch history is empty. Start watching videos to see them here!</div>\n")
         } else {
             sb.append("  <div class=\"page-header-row\">\n")
-              .append("    <h2 style=\"font-weight: 700;\">📜 Watch History</h2>\n")
+              .append("    <h2 style=\"font-weight: 700;\"><span class=\"material-symbols-rounded\" style=\"font-size:22px; vertical-align:-4px; margin-right:6px;\">history</span>Watch History</h2>\n")
               .append("    <button type=\"button\" class=\"btn-page\" onclick=\"toggleHistorySelectMode()\">Select</button>\n")
               .append("  </div>\n")
               .append("  <div id=\"history-select-bar\" class=\"history-select-bar\" style=\"display:none;\">\n")
