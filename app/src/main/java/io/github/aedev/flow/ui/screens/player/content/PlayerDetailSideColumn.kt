@@ -23,10 +23,13 @@ import io.github.aedev.flow.ui.screens.player.dialogs.PlayerDescriptionSheetHost
 import io.github.aedev.flow.ui.screens.player.dialogs.PlayerLiveChatColumn
 import io.github.aedev.flow.ui.screens.player.dialogs.PlayerSettingsSheetHost
 import io.github.aedev.flow.ui.screens.player.dialogs.PlayerSleepTimerSheetHost
+import io.github.aedev.flow.ui.screens.player.dialogs.PlayerTranscriptSheetHost
 import io.github.aedev.flow.ui.screens.player.state.PlayerScreenState
 import io.github.aedev.flow.ui.screens.player.state.PlayerSheet
 import io.github.aedev.flow.ui.screens.player.state.VideoPlayerPreferencesState
 import io.github.aedev.flow.ui.screens.player.state.VideoPlayerUiState
+import io.github.aedev.flow.ui.screens.player.state.rememberPlayerCommentsUiState
+import io.github.aedev.flow.ui.screens.player.state.transcriptTrackUrl
 import kotlinx.coroutines.launch
 
 /**
@@ -43,7 +46,6 @@ internal fun PlayerDetailSideColumn(
     viewModel: VideoPlayerViewModel,
     screenState: PlayerScreenState,
     prefs: VideoPlayerPreferencesState,
-    comments: List<Comment>,
     commentsEnabled: Boolean,
     showRelatedVideos: Boolean,
     relatedCardStyle: PlayerRelatedCardStyle,
@@ -51,9 +53,7 @@ internal fun PlayerDetailSideColumn(
     onChannelClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isLoadingComments by viewModel.isLoadingComments.collectAsStateWithLifecycle()
-    val hasMoreComments by viewModel.hasMoreComments.collectAsStateWithLifecycle()
-    val isLoadingMoreComments by viewModel.isLoadingMoreComments.collectAsStateWithLifecycle()
+    val commentsUiState = rememberPlayerCommentsUiState(viewModel)
     val scope = rememberCoroutineScope()
     val playerPreferences = prefs.preferences
     val closeSheet = { screenState.closeSheet() }
@@ -68,10 +68,8 @@ internal fun PlayerDetailSideColumn(
                     videoId = video.id,
                     screenState = screenState,
                     viewModel = viewModel,
-                    comments = comments,
-                    isLoading = isLoadingComments,
-                    isLoadingMore = isLoadingMoreComments,
-                    hasMore = hasMoreComments,
+                    commentsUiState = commentsUiState,
+                    artworkUrl = video.thumbnailUrl,
                     onNavigateToChannel = onChannelClick,
                     onClose = closeSheet,
                     modifier = paneModifier,
@@ -104,6 +102,24 @@ internal fun PlayerDetailSideColumn(
                 PlayerDescriptionSheetHost(
                     video = video,
                     uiState = uiState,
+                    viewModel = viewModel,
+                    asSidePanel = true,
+                    expandedHeight = paneHeight,
+                    onDismiss = closeSheet,
+                    hasTranscriptTrack = transcriptTrackUrl(playerState, screenState) != null,
+                    onChaptersClick = { screenState.open(PlayerSheet.Chapters) },
+                    onTranscriptClick = { screenState.open(PlayerSheet.Transcript) },
+                    onChannelClick = onChannelClick,
+                )
+            }
+
+            screenState.activeSheet == PlayerSheet.Transcript -> {
+                BackHandler(onBack = closeSheet)
+                PlayerTranscriptSheetHost(
+                    viewModel = viewModel,
+                    screenState = screenState,
+                    trackUrl = transcriptTrackUrl(playerState, screenState),
+                    artworkUrl = video.thumbnailUrl,
                     asSidePanel = true,
                     expandedHeight = paneHeight,
                     onDismiss = closeSheet,

@@ -15,6 +15,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.LiveChatMessage
@@ -35,11 +37,15 @@ import io.github.aedev.flow.ui.components.shared.MediaSleepTimerSheet
 import io.github.aedev.flow.ui.components.shared.commentTimestampToMs
 import io.github.aedev.flow.ui.components.shared.rememberDateDisplaySettings
 import io.github.aedev.flow.ui.components.videoplayer.sheet.FlowChaptersBottomSheet
+import io.github.aedev.flow.ui.components.videoplayer.sheet.FlowTranscriptBottomSheet
 import io.github.aedev.flow.ui.components.videoplayer.sheet.LiveChatList
 import io.github.aedev.flow.ui.components.videoplayer.sheet.PlayerCommentsPanel
 import io.github.aedev.flow.ui.screens.player.VideoPlayerViewModel
+import io.github.aedev.flow.ui.screens.player.state.PlayerCommentsUiState
 import io.github.aedev.flow.ui.screens.player.state.PlayerScreenState
 import io.github.aedev.flow.ui.screens.player.state.VideoPlayerUiState
+import io.github.aedev.flow.ui.screens.player.state.selectCommentSort
+import io.github.aedev.flow.ui.screens.player.state.visibleComments
 import io.github.aedev.flow.utils.DateContext
 import org.schabi.newpipe.extractor.stream.StreamSegment
 
@@ -83,12 +89,21 @@ internal fun PlayerChaptersSheetHost(
 internal fun PlayerDescriptionSheetHost(
     video: Video,
     uiState: VideoPlayerUiState,
+    viewModel: VideoPlayerViewModel,
     asSidePanel: Boolean,
     expandedHeight: Dp?,
     onDismiss: () -> Unit,
+    onChaptersClick: (() -> Unit)? = null,
+    onTranscriptClick: (() -> Unit)? = null,
+    onChannelClick: ((String) -> Unit)? = null,
+    hasTranscriptTrack: Boolean = false,
     collapsedHeight: Dp = 0.dp,
     onSheetProgressChange: (Float) -> Unit = {},
 ) {
+    val descriptionPage by viewModel.descriptionState.collectAsStateWithLifecycle()
+    LaunchedEffect(video.id) {
+        viewModel.loadDescription(video.id)
+    }
     val dateSettings = rememberDateDisplaySettings()
     val currentVideo =
         remember(uiState.streamInfo, video, uiState.channelAvatarUrl, dateSettings) {
@@ -107,13 +122,50 @@ internal fun PlayerDescriptionSheetHost(
         }
     FlowDescriptionBottomSheet(
         video = currentVideo,
+        descriptionPage = descriptionPage,
         tags = uiState.streamInfo?.tags ?: emptyList(),
-        onTimestampClick = { EnhancedPlayerManager.getInstance().seekTo(commentTimestampToMs(it)) },
+        chapterCount = uiState.chapters.size,
+        onChaptersClick = onChaptersClick,
+        onTranscriptClick = onTranscriptClick?.takeIf { hasTranscriptTrack },
+        onChannelClick = onChannelClick,
+        artworkUrl = currentVideo.thumbnailUrl,
+        onSeekMs = { EnhancedPlayerManager.getInstance().seekTo(it) },
         expandedHeight = expandedHeight,
         collapsedHeight = collapsedHeight,
         enableVerticalDismiss = !asSidePanel,
         onSheetProgressChange = onSheetProgressChange,
         onDismiss = onDismiss,
+        modifier = if (asSidePanel) Modifier.fillMaxSize() else Modifier,
+    )
+}
+
+@Composable
+internal fun PlayerTranscriptSheetHost(
+    viewModel: VideoPlayerViewModel,
+    screenState: PlayerScreenState,
+    trackUrl: String?,
+    artworkUrl: String?,
+    asSidePanel: Boolean,
+    expandedHeight: Dp?,
+    onDismiss: () -> Unit,
+    collapsedHeight: Dp = 0.dp,
+    onSheetProgressChange: (Float) -> Unit = {},
+) {
+    val transcript by viewModel.transcriptState.collectAsStateWithLifecycle()
+    LaunchedEffect(trackUrl) {
+        viewModel.loadTranscript(trackUrl)
+    }
+    FlowTranscriptBottomSheet(
+        cues = transcript.cues,
+        isLoading = transcript.isLoading,
+        currentPositionMs = { screenState.currentPosition },
+        artworkUrl = artworkUrl,
+        onSeekMs = { EnhancedPlayerManager.getInstance().seekTo(it) },
+        onDismiss = onDismiss,
+        expandedHeight = expandedHeight,
+        collapsedHeight = collapsedHeight,
+        enableVerticalDismiss = !asSidePanel,
+        onSheetProgressChange = onSheetProgressChange,
         modifier = if (asSidePanel) Modifier.fillMaxSize() else Modifier,
     )
 }
@@ -142,22 +194,26 @@ internal fun PlayerCommentsPanelHost(
     videoId: String,
     screenState: PlayerScreenState,
     viewModel: VideoPlayerViewModel,
-    comments: List<Comment>,
-    isLoading: Boolean,
-    isLoadingMore: Boolean,
-    hasMore: Boolean,
+    commentsUiState: PlayerCommentsUiState,
+    artworkUrl: String?,
     onNavigateToChannel: (String) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     PlayerCommentsPanel(
-        comments = comments,
-        isLoading = isLoading,
-        isLoadingMore = isLoadingMore,
-        hasMore = hasMore,
+        comments = commentsUiState.visibleComments(screenState),
+        isLoading = commentsUiState.isLoading,
+        isLoadingMore = commentsUiState.isLoadingMore,
+        hasMore = commentsUiState.hasMore,
         selectedFilter = screenState.commentSortFilter,
-        onFilterChanged = { screenState.commentSortFilter = it },
-        onTimestampClick = { EnhancedPlayerManager.getInstance().seekTo(commentTimestampToMs(it)) },
+        totalText = commentsUiState.totalText,
+        artworkUrl = artworkUrl,
+        timedOnly = screenState.commentsTimedOnly,
+        onTimedChange = { screenState.commentsTimedOnly = it },
+        onFilterChanged = { filter ->
+            commentsUiState.selectCommentSort(filter, videoId, screenState, viewModel)
+        },
+        onSeekMs = { EnhancedPlayerManager.getInstance().seekTo(it) },
         onLoadReplies = { viewModel.loadCommentReplies(it) },
         onLoadMoreReplies = { viewModel.loadMoreCommentReplies(it) },
         onAuthorClick = { authorChannelRef ->

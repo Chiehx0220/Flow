@@ -1,6 +1,7 @@
 package io.github.aedev.flow.ui.screens.player
 
 import android.content.Context
+import io.github.aedev.flow.data.comments.CommentsPageResult
 import io.github.aedev.flow.data.engagement.VideoEngagementSignals
 import io.github.aedev.flow.data.engagement.VideoEngagementUseCase
 import io.github.aedev.flow.data.local.ChannelSubscription
@@ -19,6 +20,7 @@ import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.repository.LiveChatRepository
 import io.github.aedev.flow.data.repository.SponsorBlockRepository
 import io.github.aedev.flow.data.repository.YouTubeRepository
+import io.github.aedev.flow.data.transcript.TranscriptRepository
 import io.github.aedev.flow.data.video.DownloadedVideo
 import io.github.aedev.flow.data.video.OfflineSubtitleStore
 import io.github.aedev.flow.data.video.VideoDownloadManager
@@ -58,6 +60,7 @@ internal class VideoPlayerViewModelHarness(
 ) {
     val context: Context = mockk(relaxed = true)
     val repository: YouTubeRepository = mockk(relaxed = true)
+    val transcriptRepository: TranscriptRepository = mockk(relaxed = true)
     val viewHistory: ViewHistory = mockk(relaxed = true)
     val subscriptionRepository: SubscriptionRepository = mockk(relaxed = true)
     val likedVideosRepository: LikedVideosRepository = mockk(relaxed = true)
@@ -164,6 +167,7 @@ internal class VideoPlayerViewModelHarness(
         coEvery { repository.getVideoStreamInfo(any()) } throws RuntimeException("newpipe unavailable")
         every { repository.getRelatedVideosFromStreamInfo(any()) } returns emptyList()
         coEvery { repository.getComments(any()) } returns (emptyList<Comment>() to null as Page?)
+        coEvery { repository.getVideoComments(any(), any()) } returns CommentsPageResult.EMPTY
 
         every { subscriptionRepository.isSubscribed(any()) } returns isSubscribed
         every { subscriptionRepository.getSubscription(any()) } returns subscription
@@ -174,6 +178,7 @@ internal class VideoPlayerViewModelHarness(
         VideoPlayerViewModel(
             context = context,
             repository = repository,
+            transcriptRepository = transcriptRepository,
             viewHistory = viewHistory,
             engagement = engagement,
             playlistRepository = playlistRepository,
