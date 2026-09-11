@@ -27,9 +27,9 @@ import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
 import io.github.aedev.flow.data.shorts.queue.openAtVideoId
 import io.github.aedev.flow.player.EnhancedMusicPlayerManager
 import io.github.aedev.flow.player.GlobalPlayerState
-import io.github.aedev.flow.ui.components.PlayerDraggableState
-import io.github.aedev.flow.ui.components.PlayerSheetValue
 import io.github.aedev.flow.ui.components.musicplayer.MusicPlayerSheetState
+import io.github.aedev.flow.ui.components.videoplayer.PlayerDraggableState
+import io.github.aedev.flow.ui.components.videoplayer.PlayerSheetValue
 import io.github.aedev.flow.ui.screens.channel.ChannelScreen
 import io.github.aedev.flow.ui.screens.history.HistoryScreen
 import io.github.aedev.flow.ui.screens.home.HomeScreen
@@ -43,8 +43,8 @@ import io.github.aedev.flow.ui.screens.music.sharedMusicPlayerViewModel
 import io.github.aedev.flow.ui.screens.notifications.NotificationScreen
 import io.github.aedev.flow.ui.screens.onboarding.OnboardingScreen
 import io.github.aedev.flow.ui.screens.personality.FlowPersonalityScreen
-import io.github.aedev.flow.ui.screens.player.VideoPlayerUiState
 import io.github.aedev.flow.ui.screens.player.VideoPlayerViewModel
+import io.github.aedev.flow.ui.screens.player.state.VideoPlayerUiState
 import io.github.aedev.flow.ui.screens.playlists.PlaylistDetailScreen
 import io.github.aedev.flow.ui.screens.playlists.PlaylistsScreen
 import io.github.aedev.flow.ui.screens.search.SearchScreen
