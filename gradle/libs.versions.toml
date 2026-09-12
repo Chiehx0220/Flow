@@ -13,13 +13,14 @@ coil = "3.5.0"
 composeReorderable = "3.1.0"
 hilt = "2.60.1"
 hiltNavigationCompose = "1.4.0"
-# PipePipeExtractor fork (InfinityLoop1308/PipePipeExtractor), pinned commit. Swaps off stock
-# TeamNewPipe/NewPipeExtractor for Bilibili support + upstream stability fixes. Bumped 2026-09-10
-# from 7919a1b9 (2026-08-20) to pick up "fix: Bilibili videos fail when metadata endpoint triggers
-# risk control" (42103481) — the fix for the NPE crash on BillibiliStreamExtractor.getAudioStreams()
-# hitting a null "dolby" object when Bilibili's risk-control silently returned a bad metadata
-# response. Tagged v5.3.1 upstream at this commit. See ppe-ref clone for this commit's source.
-newPipeExtractor = "c0cd0d61863f430af86475aaac968fbef245f507"
+# Our own fork of PipePipeExtractor (Chiehx0220/PipePipeExtractor, forked from
+# InfinityLoop1308/PipePipeExtractor), which itself swaps off stock TeamNewPipe/NewPipeExtractor
+# for Bilibili support + upstream stability fixes. Forked 2026-09-12 from v5.3.1 (c0cd0d61) so we
+# can align base-class layout with stock NewPipeExtractor ourselves instead of waiting on upstream.
+# Bumped to 710f57de2 to relocate ChannelTabExtractor/ChannelTabInfo/ChannelTabs into the
+# channel.tabs package, matching stock NewPipeExtractor's layout (was flat under channel/ and
+# linkhandler/). See ppe-ref clone for this commit's source.
+newPipeExtractor = "710f57de27ce7f04027560b40bfd41e6b568d40c"
 okhttp = "5.4.0"
 ktor = "3.5.2"
 kotlinxSerialization = "1.11.0"
@@ -82,7 +83,7 @@ coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp"
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
-newpipe-extractor = { group = "com.github.InfinityLoop1308.PipePipeExtractor", name = "extractor", version.ref = "newPipeExtractor" }
+newpipe-extractor = { group = "com.github.Chiehx0220.PipePipeExtractor", name = "extractor", version.ref = "newPipeExtractor" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
