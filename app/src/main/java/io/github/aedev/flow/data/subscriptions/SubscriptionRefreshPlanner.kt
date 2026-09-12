@@ -11,6 +11,8 @@ import io.github.aedev.flow.data.local.ChannelSubscription
 data class SubscriptionRefreshPlan(
     val channelIds: List<String>,
     val isFullRefresh: Boolean,
+    /** Which service each planned channel belongs to — a Bilibili channel has no YouTube RSS feed. */
+    val serviceIdByChannel: Map<String, Int> = emptyMap(),
 ) {
     val isEmpty: Boolean get() = channelIds.isEmpty()
 
@@ -37,10 +39,12 @@ object SubscriptionRefreshPlanner {
         force: Boolean = false,
     ): SubscriptionRefreshPlan {
         if (subscriptions.isEmpty()) return SubscriptionRefreshPlan.NOTHING_TO_DO
+        val serviceIdByChannel = subscriptions.associate { it.channelId to it.serviceId }
         if (force) {
             return SubscriptionRefreshPlan(
                 channelIds = subscriptions.map { it.channelId },
                 isFullRefresh = true,
+                serviceIdByChannel = serviceIdByChannel,
             )
         }
 
@@ -48,6 +52,7 @@ object SubscriptionRefreshPlanner {
         return SubscriptionRefreshPlan(
             channelIds = stale.map { it.channelId },
             isFullRefresh = stale.size == subscriptions.size,
+            serviceIdByChannel = serviceIdByChannel,
         )
     }
 

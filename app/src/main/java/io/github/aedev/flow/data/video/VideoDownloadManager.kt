@@ -342,6 +342,7 @@ class VideoDownloadManager
                     duration = video.duration.toLong(),
                     thumbnailUrl = video.thumbnailUrl,
                     createdAt = System.currentTimeMillis(),
+                    serviceId = video.serviceId,
                 ),
             )
             downloadDao.insertItems(items)
@@ -364,6 +365,7 @@ class VideoDownloadManager
                     duration = video.duration.toLong(),
                     thumbnailUrl = video.thumbnailUrl,
                     createdAt = System.currentTimeMillis(),
+                    serviceId = video.serviceId,
                 ),
             )
             downloadDao.insertItem(
@@ -580,6 +582,7 @@ class VideoDownloadManager
                         viewCount = 0,
                         uploadDate = dwi.download.createdAt.toString(),
                         description = context.getString(R.string.fallback_downloaded_locally),
+                        serviceId = dwi.download.serviceId,
                     ),
                 filePath = dwi.primaryFilePath ?: "",
                 downloadedAt = dwi.download.createdAt,

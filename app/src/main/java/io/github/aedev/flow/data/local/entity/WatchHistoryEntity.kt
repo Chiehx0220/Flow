@@ -36,6 +36,7 @@ data class WatchHistoryEntity(
     val isMusic: Boolean,
     val isShort: Boolean = false,
     val isLocal: Boolean = false,
+    val serviceId: Int = 0,
 ) {
     fun toDomain() =
         VideoHistoryEntry(
@@ -50,6 +51,7 @@ data class WatchHistoryEntity(
             isMusic = isMusic,
             isShort = isShort,
             isLocal = isLocal,
+            serviceId = serviceId,
         )
 
     /** Reconstruct a lightweight [Video] from history metadata (no stream info). */
@@ -64,5 +66,6 @@ data class WatchHistoryEntity(
             viewCount = 0,
             uploadDate = "",
             isShort = isShort,
+            serviceId = serviceId,
         )
 }

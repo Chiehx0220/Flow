@@ -25,6 +25,11 @@ class NewPipeDownloaderImpl(
     proxy: Proxy?,
     proxyAuth: String? = null,
 ) : Downloader() {
+    companion object {
+        // Verbs OkHttp's Request.Builder.method() refuses to send without a body.
+        private val BODY_REQUIRED_METHODS = setOf("POST", "PUT", "PATCH", "PROPPATCH", "REPORT")
+    }
+
     private val client =
         OkHttpClient
             .Builder()
@@ -44,10 +49,17 @@ class NewPipeDownloaderImpl(
         val headers = request.headers()
         val dataToSend = request.dataToSend()
 
+        // OkHttp's method(name, body) throws "method POST must have a request body" for any
+        // body-requiring verb (POST/PUT/PATCH/...) given a null body - dataToSend is null
+        // whenever the extractor issues a bodyless POST, so fall back to an empty body instead
+        // of passing the null straight through.
+        val requestBody =
+            dataToSend?.toRequestBody()
+                ?: if (httpMethod in BODY_REQUIRED_METHODS) ByteArray(0).toRequestBody() else null
         val requestBuilder =
             okhttp3.Request
                 .Builder()
-                .method(httpMethod, dataToSend?.toRequestBody())
+                .method(httpMethod, requestBody)
                 .url(url)
                 .addHeader("User-Agent", YouTubeClient.USER_AGENT_WEB)
 

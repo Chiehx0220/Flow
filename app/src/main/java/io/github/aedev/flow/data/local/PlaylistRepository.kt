@@ -222,6 +222,7 @@ class PlaylistRepository
             name: String,
             description: String,
             thumbnailUrl: String,
+            serviceId: Int = 0,
         ) {
             val entity =
                 PlaylistEntity(
@@ -233,6 +234,7 @@ class PlaylistRepository
                     createdAt = System.currentTimeMillis(),
                     isMusic = false,
                     isUserCreated = false,
+                    serviceId = serviceId,
                 )
             playlistDao.insertPlaylist(entity)
         }

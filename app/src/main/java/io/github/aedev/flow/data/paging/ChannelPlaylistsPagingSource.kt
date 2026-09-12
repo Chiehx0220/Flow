@@ -9,7 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.channel.ChannelInfo
+import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.channel.ChannelTabInfo
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
@@ -19,6 +19,7 @@ import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
  */
 class ChannelPlaylistsPagingSource(
     private val playlistsTab: ListLinkHandler?,
+    private val serviceId: Int = ServiceList.YouTube.serviceId,
 ) : PagingSource<Page, Playlist>() {
     companion object {
         private const val TAG = "ChannelPlaylistsPaging"
@@ -49,7 +50,7 @@ class ChannelPlaylistsPagingSource(
 
                 if (page == null) {
                     // Initial load
-                    val tabInfo = ChannelTabInfo.getInfo(NewPipe.getService(0), playlistsTab)
+                    val tabInfo = ChannelTabInfo.getInfo(NewPipe.getService(serviceId), playlistsTab)
                     nextPage = tabInfo.nextPage
 
                     tabInfo.relatedItems.filterIsInstance<PlaylistInfoItem>().forEach { item ->
@@ -57,7 +58,7 @@ class ChannelPlaylistsPagingSource(
                     }
                 } else {
                     // Load more
-                    val moreItems = ChannelTabInfo.getMoreItems(NewPipe.getService(0), playlistsTab, page)
+                    val moreItems = ChannelTabInfo.getMoreItems(NewPipe.getService(serviceId), playlistsTab, page)
                     nextPage = moreItems.nextPage
 
                     moreItems.items.filterIsInstance<PlaylistInfoItem>().forEach { item ->
@@ -78,10 +79,17 @@ class ChannelPlaylistsPagingSource(
     }
 
     private fun PlaylistInfoItem.toPlaylist(): Playlist {
+        val isYouTube = serviceId == ServiceList.YouTube.serviceId
         val playlistId =
-            when {
-                this.url.contains("list=") -> this.url.substringAfter("list=").substringBefore("&")
-                else -> this.url.substringAfterLast("/").substringBefore("?")
+            if (isYouTube) {
+                when {
+                    this.url.contains("list=") -> this.url.substringAfter("list=").substringBefore("&")
+                    else -> this.url.substringAfterLast("/").substringBefore("?")
+                }
+            } else {
+                runCatching {
+                    NewPipe.getService(serviceId).playlistLHFactory.getId(this.url)
+                }.getOrDefault(this.url.substringAfterLast("/").substringBefore("?"))
             }
 
         return Playlist(
@@ -90,6 +98,7 @@ class ChannelPlaylistsPagingSource(
             thumbnailUrl = this.thumbnailUrl ?: "",
             videoCount = this.streamCount.toInt(),
             isLocal = false,
+            serviceId = serviceId,
         )
     }
 }

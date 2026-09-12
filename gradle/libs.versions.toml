@@ -12,10 +12,13 @@ coil = "3.5.0"
 composeReorderable = "3.1.0"
 hilt = "2.60.1"
 hiltNavigationCompose = "1.4.0"
-# PipePipeExtractor fork (InfinityLoop1308/PipePipeExtractor), pinned commit — same pin used by
-# the sibling localtube/Fathom projects. Swaps off stock TeamNewPipe/NewPipeExtractor for
-# Bilibili support + upstream stability fixes. See ppe-ref clone for this commit's source.
-newPipeExtractor = "7919a1b9935638a1b9149ee556c42040d183b5e3"
+# PipePipeExtractor fork (InfinityLoop1308/PipePipeExtractor), pinned commit. Swaps off stock
+# TeamNewPipe/NewPipeExtractor for Bilibili support + upstream stability fixes. Bumped 2026-09-10
+# from 7919a1b9 (2026-08-20) to pick up "fix: Bilibili videos fail when metadata endpoint triggers
+# risk control" (42103481) — the fix for the NPE crash on BillibiliStreamExtractor.getAudioStreams()
+# hitting a null "dolby" object when Bilibili's risk-control silently returned a bad metadata
+# response. Tagged v5.3.1 upstream at this commit. See ppe-ref clone for this commit's source.
+newPipeExtractor = "c0cd0d61863f430af86475aaac968fbef245f507"
 okhttp = "5.4.0"
 ktor = "3.5.2"
 kotlinxSerialization = "1.11.0"

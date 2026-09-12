@@ -301,6 +301,7 @@ class HistoryViewModel
                                         channelId = video.channelId,
                                         isMusic = stub.isMusic,
                                         isShort = stub.isShort || video.isShort,
+                                        serviceId = video.serviceId,
                                     ),
                                 )
                             } catch (_: Exception) {

@@ -35,6 +35,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.ServiceList
+import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.comments.CommentsInfoItem
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.kiosk.KioskExtractor
@@ -322,6 +323,7 @@ class YouTubeRepository
         suspend fun searchVideos(
             query: String,
             nextPage: Page? = null,
+            service: StreamingService = this.service,
         ): Pair<List<Video>, Page?> =
             withContext(Dispatchers.IO) {
                 try {
@@ -344,12 +346,16 @@ class YouTubeRepository
                     val videos =
                         infoItems.items
                             .filterIsInstance<StreamInfoItem>()
-                            .map { item -> item.toVideo() }
+                            .map { item -> item.toVideo(service) }
 
                     val enriched =
-                        enrichLikelyCollabAvatarStacks(
-                            enrichVideosWithSearchAvatarStacks(query, videos),
-                        )
+                        if (service.serviceId == ServiceList.YouTube.serviceId) {
+                            enrichLikelyCollabAvatarStacks(
+                                enrichVideosWithSearchAvatarStacks(query, videos),
+                            )
+                        } else {
+                            videos
+                        }
                     Pair(enriched, infoItems.nextPage)
                 } catch (e: Exception) {
                     Log.w(TAG, "${e::class.simpleName}: ${e.message}")
@@ -364,6 +370,7 @@ class YouTubeRepository
             query: String,
             contentFilters: List<String> = emptyList(),
             nextPage: Page? = null,
+            service: StreamingService = this.service,
         ): io.github.aedev.flow.data.model.SearchResult =
             withContext(Dispatchers.IO) {
                 try {
@@ -390,24 +397,28 @@ class YouTubeRepository
                     infoItems.items.forEach { item ->
                         when (item) {
                             is StreamInfoItem -> {
-                                videos.add(item.toVideo())
+                                videos.add(item.toVideo(service))
                             }
 
                             is org.schabi.newpipe.extractor.channel.ChannelInfoItem -> {
-                                channels.add(item.toChannel())
+                                channels.add(item.toChannel(service))
                             }
 
                             is org.schabi.newpipe.extractor.playlist.PlaylistInfoItem -> {
-                                playlists.add(item.toPlaylist())
+                                playlists.add(item.toPlaylist(service))
                             }
                         }
                     }
 
                     io.github.aedev.flow.data.model.SearchResult(
                         videos =
-                            enrichLikelyCollabAvatarStacks(
-                                enrichVideosWithSearchAvatarStacks(query, videos),
-                            ),
+                            if (service.serviceId == ServiceList.YouTube.serviceId) {
+                                enrichLikelyCollabAvatarStacks(
+                                    enrichVideosWithSearchAvatarStacks(query, videos),
+                                )
+                            } else {
+                                videos
+                            },
                         channels = channels,
                         playlists = playlists,
                     )
@@ -556,19 +567,30 @@ class YouTubeRepository
          * generic "unknown error".  Callers that want null-on-failure should wrap in
          * try/catch themselves.
          */
-        suspend fun getVideoStreamInfo(videoId: String): StreamInfo? =
+        suspend fun getVideoStreamInfo(
+            videoId: String,
+            service: StreamingService = this.service,
+        ): StreamInfo? =
             withContext(Dispatchers.IO) {
                 try {
-                    val url = "https://www.youtube.com/watch?v=$videoId"
+                    val url =
+                        if (service.serviceId == ServiceList.YouTube.serviceId) {
+                            "https://www.youtube.com/watch?v=$videoId"
+                        } else {
+                            service.streamLHFactory.getUrl(videoId)
+                        }
                     StreamInfo.getInfo(service, url)
                 } catch (e: Exception) {
                     // NewPipe "The page needs to be reloaded" error handling
                     // This often happens due to stale internal state or specific YouTube bot identifiers
                     val isReloadError =
-                        e.message?.contains("page needs to be reloaded", ignoreCase = true) == true ||
+                        service.serviceId == ServiceList.YouTube.serviceId &&
                             (
-                                e is org.schabi.newpipe.extractor.exceptions.ContentNotAvailableException &&
-                                    e.message?.contains("reloaded") == true
+                                e.message?.contains("page needs to be reloaded", ignoreCase = true) == true ||
+                                    (
+                                        e is org.schabi.newpipe.extractor.exceptions.ContentNotAvailableException &&
+                                            e.message?.contains("reloaded") == true
+                                    )
                             )
 
                     if (isReloadError) {
@@ -607,10 +629,13 @@ class YouTubeRepository
         /**
          * Get a single video object by ID
          */
-        suspend fun getVideo(videoId: String): Video? =
+        suspend fun getVideo(
+            videoId: String,
+            service: StreamingService = this.service,
+        ): Video? =
             withContext(Dispatchers.IO) {
                 try {
-                    val info = getVideoStreamInfo(videoId) ?: return@withContext null
+                    val info = getVideoStreamInfo(videoId, service) ?: return@withContext null
 
                     val bestThumbnail =
                         info.thumbnails
@@ -626,7 +651,7 @@ class YouTubeRepository
                         id = videoId,
                         title = info.name ?: "Unknown Title",
                         channelName = info.uploaderName ?: "Unknown Channel",
-                        channelId = extractChannelId(info.uploaderUrl),
+                        channelId = extractChannelId(info.uploaderUrl, service),
                         thumbnailUrl = bestThumbnail,
                         duration = info.duration.toInt(),
                         viewCount = info.viewCount,
@@ -641,6 +666,7 @@ class YouTubeRepository
                             ),
                         channelThumbnailUrl = bestAvatar,
                         channelThumbnailUrls = avatarUrls,
+                        serviceId = service.serviceId,
                     )
                 } catch (e: Exception) {
                     Log.w(TAG, "${e::class.simpleName}: ${e.message}")
@@ -666,12 +692,16 @@ class YouTubeRepository
         suspend fun getChannelUploads(
             channelIdOrUrl: String,
             limitPerChannel: Int = 6,
+            service: StreamingService = this.service,
         ): List<Video> =
             withContext(Dispatchers.IO) {
                 try {
+                    val isYouTube = service.serviceId == ServiceList.YouTube.serviceId
+
                     // Try to extract a channelId (UC...) from the input
                     val channelId =
                         when {
+                            !isYouTube -> null
                             channelIdOrUrl.startsWith("UC") -> {
                                 channelIdOrUrl
                             }
@@ -696,16 +726,16 @@ class YouTubeRepository
                                 .filterIsInstance<StreamInfoItem>()
                                 .filterNot { it.isPaidOrMembersOnly() }
                                 .take(limitPerChannel)
-                                .map { it.toVideo() }
+                                .map { it.toVideo(service) }
                         return@withContext markUploadsPlaylistReels(channelId, items)
                     }
 
                     // Fallback: attempt to use channel extractor directly (best-effort)
                     val channelUrl =
-                        if (channelIdOrUrl.startsWith("http")) {
-                            channelIdOrUrl
-                        } else {
-                            "https://www.youtube.com/channel/$channelIdOrUrl"
+                        when {
+                            channelIdOrUrl.startsWith("http") -> channelIdOrUrl
+                            isYouTube -> "https://www.youtube.com/channel/$channelIdOrUrl"
+                            else -> runCatching { service.channelLHFactory.getUrl(channelIdOrUrl) }.getOrDefault(channelIdOrUrl)
                         }
                     val extractor = service.getChannelExtractor(channelUrl)
                     extractor.fetchPage()
@@ -736,7 +766,7 @@ class YouTubeRepository
                         pageItems
                             .filterNot { it.isPaidOrMembersOnly() }
                             .take(limitPerChannel)
-                            .map { it.toVideo() }
+                            .map { it.toVideo(service) }
                     if (channelId != null) {
                         markUploadsPlaylistReels(channelId, fallbackItems)
                     } else {
@@ -759,13 +789,18 @@ class YouTubeRepository
         /**
          * Fetch channel info (best-effort) using NewPipe's channel extractor.
          */
-        suspend fun getChannelInfo(channelIdOrUrl: String): org.schabi.newpipe.extractor.channel.ChannelInfo? =
+        suspend fun getChannelInfo(
+            channelIdOrUrl: String,
+            service: StreamingService = this.service,
+        ): org.schabi.newpipe.extractor.channel.ChannelInfo? =
             withContext(Dispatchers.IO) {
                 try {
                     val value = channelIdOrUrl.trim()
+                    val isYouTube = service.serviceId == ServiceList.YouTube.serviceId
                     val channelUrl =
                         when {
                             value.startsWith("http") -> value
+                            !isYouTube -> runCatching { service.channelLHFactory.getUrl(value) }.getOrDefault(value)
                             value.startsWith("UC") -> "https://www.youtube.com/channel/$value"
                             value.startsWith("@") -> "https://www.youtube.com/$value"
                             else -> "https://www.youtube.com/@$value"
@@ -1024,10 +1059,18 @@ class YouTubeRepository
          * Fetch the first page of comments for a video.
          * Returns the comments and a next-page token (null if no more pages).
          */
-        suspend fun getComments(videoId: String): Pair<List<Comment>, Page?> =
+        suspend fun getComments(
+            videoId: String,
+            service: StreamingService = this.service,
+        ): Pair<List<Comment>, Page?> =
             withContext(Dispatchers.IO) {
                 try {
-                    val url = "https://www.youtube.com/watch?v=$videoId"
+                    val url =
+                        if (service.serviceId == ServiceList.YouTube.serviceId) {
+                            "https://www.youtube.com/watch?v=$videoId"
+                        } else {
+                            service.streamLHFactory.getUrl(videoId)
+                        }
                     val commentsInfo =
                         org.schabi.newpipe.extractor.comments.CommentsInfo
                             .getInfo(service, url)
@@ -1046,10 +1089,16 @@ class YouTubeRepository
         suspend fun getMoreComments(
             videoId: String,
             nextPage: Page,
+            service: StreamingService = this.service,
         ): Pair<List<Comment>, Page?> =
             withContext(Dispatchers.IO) {
                 try {
-                    val url = "https://www.youtube.com/watch?v=$videoId"
+                    val url =
+                        if (service.serviceId == ServiceList.YouTube.serviceId) {
+                            "https://www.youtube.com/watch?v=$videoId"
+                        } else {
+                            service.streamLHFactory.getUrl(videoId)
+                        }
                     val moreItems =
                         org.schabi.newpipe.extractor.comments.CommentsInfo
                             .getMoreItems(service, url, nextPage)
@@ -1126,7 +1175,7 @@ class YouTubeRepository
                                 embeddedAvatar = embeddedAvatars[index],
                                 resolvedChannelAvatar = fallbackAvatars[uploaderReference],
                             ),
-                        text = item.commentText ?: "",
+                        text = item.commentText.content ?: "",
                         likeCount = item.likeCount.toInt(),
                         publishedTime = item.textualUploadDate ?: "",
                         replyCount = item.replyCount.toInt(),
@@ -1140,10 +1189,19 @@ class YouTubeRepository
         /**
          * Fetch playlist details
          */
-        suspend fun getPlaylistDetails(playlistId: String): io.github.aedev.flow.data.model.Playlist? =
+        suspend fun getPlaylistDetails(
+            playlistId: String,
+            service: StreamingService = this.service,
+        ): io.github.aedev.flow.data.model.Playlist? =
             withContext(Dispatchers.IO) {
                 try {
-                    val playlistUrl = "https://www.youtube.com/playlist?list=$playlistId"
+                    val isYouTube = service.serviceId == ServiceList.YouTube.serviceId
+                    val playlistUrl =
+                        if (isYouTube) {
+                            "https://www.youtube.com/playlist?list=$playlistId"
+                        } else {
+                            service.playlistLHFactory.getUrl(playlistId)
+                        }
                     val playlistInfo =
                         org.schabi.newpipe.extractor.playlist.PlaylistInfo
                             .getInfo(service, playlistUrl)
@@ -1152,7 +1210,7 @@ class YouTubeRepository
                     allVideos +=
                         playlistInfo.relatedItems
                             .filterIsInstance<StreamInfoItem>()
-                            .map { it.toVideo() }
+                            .map { it.toVideo(service) }
 
                     var nextPage = playlistInfo.nextPage
                     while (nextPage != null) {
@@ -1162,15 +1220,19 @@ class YouTubeRepository
                         allVideos +=
                             page.items
                                 .filterIsInstance<StreamInfoItem>()
-                                .map { it.toVideo() }
+                                .map { it.toVideo(service) }
                         nextPage = page.nextPage
                     }
 
-                    val innertubeVideos = fetchInnertubePlaylistVideos(playlistId)
                     val playlistVideos =
-                        if (innertubeVideos.size > allVideos.size) {
-                            val knownIds = allVideos.mapTo(HashSet()) { it.id }
-                            allVideos + innertubeVideos.filter { it.id !in knownIds }
+                        if (isYouTube) {
+                            val innertubeVideos = fetchInnertubePlaylistVideos(playlistId)
+                            if (innertubeVideos.size > allVideos.size) {
+                                val knownIds = allVideos.mapTo(HashSet()) { it.id }
+                                allVideos + innertubeVideos.filter { it.id !in knownIds }
+                            } else {
+                                allVideos
+                            }
                         } else {
                             allVideos
                         }
@@ -1188,6 +1250,7 @@ class YouTubeRepository
                         description = "",
                         videos = playlistVideos,
                         isLocal = false,
+                        serviceId = service.serviceId,
                     )
                 } catch (e: Exception) {
                     Log.w(TAG, "${e::class.simpleName}: ${e.message}")
@@ -1201,9 +1264,10 @@ class YouTubeRepository
          */
         fun getRelatedVideosFromStreamInfo(info: StreamInfo): List<Video> =
             try {
+                val infoService = runCatching { NewPipe.getService(info.serviceId) }.getOrDefault(service)
                 info.relatedItems
                     .filterIsInstance<StreamInfoItem>()
-                    .map { it.toVideo() }
+                    .map { it.toVideo(infoService) }
                     .filter { it.id.isNotBlank() }
                     .distinctBy { it.id }
             } catch (e: Exception) {
@@ -1374,7 +1438,7 @@ class YouTubeRepository
         /**
          * Extension function to convert StreamInfoItem to our Video model
          */
-        private fun StreamInfoItem.toVideo(): Video {
+        private fun StreamInfoItem.toVideo(service: StreamingService = this@YouTubeRepository.service): Video {
             val rawUrl = url ?: ""
             val videoId =
                 when {
@@ -1416,7 +1480,7 @@ class YouTubeRepository
                 id = videoId,
                 title = name ?: "Unknown Title",
                 channelName = uploaderName ?: "Unknown Channel",
-                channelId = extractChannelId(uploaderUrl),
+                channelId = extractChannelId(uploaderUrl, service),
                 thumbnailUrl = bestThumbnail,
                 duration = durationSecs,
                 viewCount = viewCount,
@@ -1454,13 +1518,16 @@ class YouTubeRepository
                 isLive = isLiveStream,
                 isShort = isReel,
                 isMusic = isMusicCandidate,
+                serviceId = service.serviceId,
             )
         }
 
         /**
          * Extension function to convert ChannelInfoItem to our Channel model
          */
-        private fun org.schabi.newpipe.extractor.channel.ChannelInfoItem.toChannel(): io.github.aedev.flow.data.model.Channel {
+        private fun org.schabi.newpipe.extractor.channel.ChannelInfoItem.toChannel(
+            service: StreamingService = this@YouTubeRepository.service,
+        ): io.github.aedev.flow.data.model.Channel {
             val bestThumbnail = thumbnailUrl ?: ""
 
             // Extract the channel ID properly from the URL
@@ -1480,14 +1547,25 @@ class YouTubeRepository
                 subscriberCount = subscriberCount,
                 description = description ?: "",
                 url = url,
+                serviceId = service.serviceId,
             )
         }
 
         /**
          * Extension function to convert PlaylistInfoItem to our Playlist model
          */
-        private fun org.schabi.newpipe.extractor.playlist.PlaylistInfoItem.toPlaylist(): io.github.aedev.flow.data.model.Playlist {
-            val playlistId = url.substringAfterLast("=")
+        private fun org.schabi.newpipe.extractor.playlist.PlaylistInfoItem.toPlaylist(
+            service: StreamingService = this@YouTubeRepository.service,
+        ): io.github.aedev.flow.data.model.Playlist {
+            // YouTube playlist urls are "...?list=<id>"; other services (e.g. Bilibili) don't
+            // follow that shape, so resolve their id through the service's own link handler
+            // instead of assuming a "=" separator.
+            val playlistId =
+                if (service.serviceId == ServiceList.YouTube.serviceId) {
+                    url.substringAfterLast("=")
+                } else {
+                    runCatching { service.playlistLHFactory.getId(url) }.getOrDefault(url.substringAfterLast("/"))
+                }
             val bestThumbnail = ThumbnailUrlResolver.normalizeVideoThumbnail(playlistId, thumbnailUrl)
 
             return io.github.aedev.flow.data.model.Playlist(
@@ -1496,11 +1574,26 @@ class YouTubeRepository
                 thumbnailUrl = bestThumbnail,
                 videoCount = streamCount.toInt(),
                 isLocal = false,
+                serviceId = service.serviceId,
             )
         }
 
-        private fun extractChannelId(uploaderUrl: String?): String {
+        private fun extractChannelId(
+            uploaderUrl: String?,
+            service: StreamingService = this.service,
+        ): String {
             if (uploaderUrl.isNullOrBlank()) return ""
+            if (service.serviceId != ServiceList.YouTube.serviceId) {
+                // Other services' uploader URLs (e.g. Bilibili's "https://space.bilibili.com/584525428/")
+                // don't fit any of the YouTube-shaped patterns below, and a trailing slash makes even
+                // the naive last-path-segment fallback return "" - resolve through the service's own
+                // link handler instead of guessing at URL structure.
+                return runCatching {
+                    service.channelLHFactory.getId(uploaderUrl)
+                }.getOrDefault(
+                    uploaderUrl.trim().trimEnd('/').substringAfterLast("/").substringBefore("?"),
+                )
+            }
             val url = uploaderUrl.trim()
             return when {
                 url.contains("/channel/") -> {

@@ -19,4 +19,5 @@ data class PlaylistEntity(
     val isMusic: Boolean = false,
     val isUserCreated: Boolean = true,
     val syncId: String? = null,
+    val serviceId: Int = 0,
 )

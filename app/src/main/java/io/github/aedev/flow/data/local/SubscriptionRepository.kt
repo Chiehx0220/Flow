@@ -269,7 +269,7 @@ class SubscriptionRepository private constructor(
     }
 
     private fun serializeChannel(channel: ChannelSubscription): String =
-        "${channel.channelId}|${channel.channelName}|${channel.channelThumbnail}|${channel.subscribedAt}|${channel.lastVideoId ?: ""}|${channel.lastCheckTime}|${channel.isNotificationEnabled}|${channel.isMusic}|${channel.lastFeedFetchAt}"
+        "${channel.channelId}|${channel.channelName}|${channel.channelThumbnail}|${channel.subscribedAt}|${channel.lastVideoId ?: ""}|${channel.lastCheckTime}|${channel.isNotificationEnabled}|${channel.isMusic}|${channel.lastFeedFetchAt}|${channel.serviceId}"
 
     private fun ChannelSubscription.withPreservedThumbnail(preferences: Preferences): ChannelSubscription {
         val existing = preferences[channelKey(channelId)]?.let { deserializeChannel(it) }
@@ -298,6 +298,7 @@ class SubscriptionRepository private constructor(
                     isNotificationEnabled = if (parts.size > 6 && parts[6].isNotEmpty()) parts[6].toBoolean() else false,
                     isMusic = if (parts.size > 7 && parts[7].isNotEmpty()) parts[7].toBoolean() else false,
                     lastFeedFetchAt = if (parts.size > 8 && parts[8].isNotEmpty()) parts[8].toLong() else 0L,
+                    serviceId = if (parts.size > 9 && parts[9].isNotEmpty()) parts[9].toIntOrNull() ?: 0 else 0,
                 )
             } else {
                 null
@@ -384,4 +385,6 @@ data class ChannelSubscription(
     val isMusic: Boolean = false,
     /** When the subscription feed last fetched this channel; 0 means never. */
     val lastFeedFetchAt: Long = 0L,
+    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. */
+    val serviceId: Int = 0,
 )

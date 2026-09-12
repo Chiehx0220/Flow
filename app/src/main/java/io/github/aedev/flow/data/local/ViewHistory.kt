@@ -74,7 +74,8 @@ class ViewHistory private constructor(private val context: Context) {
         channelId: String = "",
         isMusic: Boolean = false,
         isShort: Boolean = false,
-        isLocal: Boolean = false
+        isLocal: Boolean = false,
+        serviceId: Int = 0
     ) {
         val prefs = PlayerPreferences(context)
         if (prefs.isDeepFlowCurrentlyActive() && !prefs.isDeepFlowSaveToHistoryEnabled()) return
@@ -92,7 +93,8 @@ class ViewHistory private constructor(private val context: Context) {
                 channelId    = channelId,
                 isMusic      = isMusic,
                 isShort      = isShort,
-                isLocal      = isLocal
+                isLocal      = isLocal,
+                serviceId    = serviceId
             )
         )
     }
@@ -123,7 +125,8 @@ class ViewHistory private constructor(private val context: Context) {
         channelName: String = "",
         channelId: String = "",
         duration: Long = 0L,
-        isShort: Boolean = false
+        isShort: Boolean = false,
+        serviceId: Int = 0
     ) {
         val prefs = PlayerPreferences(context)
         if (prefs.isDeepFlowCurrentlyActive() && !prefs.isDeepFlowSaveToHistoryEnabled()) return
@@ -141,7 +144,8 @@ class ViewHistory private constructor(private val context: Context) {
                 channelName  = channelName,
                 channelId    = channelId,
                 isMusic      = false,
-                isShort      = isShort
+                isShort      = isShort,
+                serviceId    = serviceId
             )
         )
     }
@@ -290,7 +294,8 @@ data class VideoHistoryEntry(
     val channelId: String = "",
     val isMusic: Boolean = false,
     val isShort: Boolean = false,
-    val isLocal: Boolean = false
+    val isLocal: Boolean = false,
+    val serviceId: Int = 0
 ) {
     val progressPercentage: Float
         get() = if (duration > 0) (position.toFloat() / duration.toFloat()) * 100f else 0f

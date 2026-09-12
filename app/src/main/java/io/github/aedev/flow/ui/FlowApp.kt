@@ -1,6 +1,7 @@
 package io.github.aedev.flow.ui
 
 import android.app.Activity
+import io.github.aedev.flow.player.error.PlayerDiagnostics
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -296,6 +297,7 @@ fun FlowApp(
                     duration = streamInfo.duration.toInt(),
                     viewCount = streamInfo.viewCount,
                     uploadDate = "",
+                    serviceId = streamInfo.serviceId,
                 )
             }
 
@@ -707,7 +709,25 @@ fun FlowApp(
             },
             onNavigateToChannel = { channelArg ->
                 playerSheetState.collapse()
-                navController.navigateToYoutubeChannel(channelArg)
+                // channelArg can be a stale/blank id (the nav placeholder's channelId is never
+                // synced back from GlobalPlayerState once real metadata loads) — prefer the
+                // current StreamInfo's own uploaderUrl, which is always a real, complete URL.
+                val streamInfo = playerUiState.streamInfo
+                val uploaderUrl = streamInfo?.uploaderUrl?.takeIf { it.isNotBlank() }
+                PlayerDiagnostics.logWarning(
+                    "ChannelNav",
+                    "channelArg=$channelArg activeVideo.channelId=${activeVideo?.channelId} " +
+                        "activeVideo.serviceId=${activeVideo?.serviceId} streamInfo.uploaderUrl=${streamInfo?.uploaderUrl} " +
+                        "streamInfo.serviceId=${streamInfo?.serviceId}",
+                )
+                if (uploaderUrl != null) {
+                    navController.navigateToYoutubeChannel(uploaderUrl, streamInfo.serviceId)
+                } else {
+                    navController.navigateToYoutubeChannel(
+                        channelArg,
+                        activeVideo?.serviceId ?: org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId,
+                    )
+                }
             },
             onNavigateToShorts = { videoId ->
                 playerSheetState.collapse()

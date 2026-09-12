@@ -273,7 +273,7 @@ fun VideoQuickActionsBottomSheet(
                                                 putExtra(Intent.EXTRA_SUBJECT, video.title)
                                                 putExtra(
                                                     Intent.EXTRA_TEXT,
-                                                    "https://www.youtube.com/watch?v=${video.id}",
+                                                    io.github.aedev.flow.ui.videoUrl(video.id, video.serviceId),
                                                 )
                                             }
                                         context.startActivity(
@@ -391,6 +391,7 @@ fun VideoQuickActionsBottomSheet(
                                             channelId = video.channelId,
                                             channelName = video.channelName,
                                             channelThumbnail = video.channelThumbnailUrl,
+                                            serviceId = video.serviceId,
                                         )
                                     },
                                 ),

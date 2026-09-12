@@ -18,7 +18,8 @@ data class SubscriptionFeedEntity(
     val isShort: Boolean = false,
     val isLive: Boolean = false,
     val isUpcoming: Boolean = false,
-    val cachedAt: Long = System.currentTimeMillis()
+    val cachedAt: Long = System.currentTimeMillis(),
+    val serviceId: Int = 0
 )
 
 @Entity(tableName = "music_home_cache")

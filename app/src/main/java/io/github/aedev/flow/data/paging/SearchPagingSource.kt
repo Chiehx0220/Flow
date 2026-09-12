@@ -23,6 +23,7 @@ import io.github.aedev.flow.utils.avatarImageIdentityKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.channel.ChannelInfoItem
@@ -65,6 +66,7 @@ class SearchPagingSource(
     private val contentFilters: List<String> = emptyList(),
     private val searchFilter: SearchFilter? = null,
     private val shortsEnabled: Boolean = true,
+    private val serviceId: Int = ServiceList.YouTube.serviceId,
 ) : PagingSource<Page, SearchResultItem>() {
     companion object {
         private const val TAG = "SearchPagingSource"
@@ -84,7 +86,8 @@ class SearchPagingSource(
         }
     }
 
-    private val service = ServiceList.YouTube
+    private val service = runCatching { NewPipe.getService(serviceId) }.getOrDefault(ServiceList.YouTube)
+    private val isYouTube = service.serviceId == ServiceList.YouTube.serviceId
     private val loadedItemKeys = DistinctKeyTracker()
 
     override fun getRefreshKey(state: PagingState<Page, SearchResultItem>): Page? = null
@@ -95,11 +98,10 @@ class SearchPagingSource(
                 val page = params.key
 
                 // Shorts tab: NewPipe search has no shorts, so serve them directly (single page).
+                // Shorts are sourced from YouTube's web-client shelf; not available for other services.
                 if (searchFilter?.contentType == ContentType.SHORTS) {
                     val shorts =
-                        if (page == null &&
-                            shortsEnabled
-                        ) {
+                        if (page == null && shortsEnabled && isYouTube) {
                             fetchShortVideos().map { SearchResultItem.VideoResult(it) }
                         } else {
                             emptyList()
@@ -111,7 +113,7 @@ class SearchPagingSource(
                     )
                 }
 
-                if (searchFilter?.sortType == SortType.VIEWS) {
+                if (isYouTube && searchFilter?.sortType == SortType.VIEWS) {
                     return@withContext loadViewSortedPage(page)
                 }
 
@@ -131,7 +133,7 @@ class SearchPagingSource(
                     }
 
                 val searchAvatarStacks =
-                    if (page == null) {
+                    if (page == null && isYouTube) {
                         withTimeoutOrNull(4_000L) {
                             YouTube.searchVideoAvatarStacks(query).getOrNull()
                         }.orEmpty()
@@ -147,7 +149,7 @@ class SearchPagingSource(
                                     item.streamType == StreamType.LIVE_STREAM ||
                                         item.streamType == StreamType.AUDIO_LIVE_STREAM
 
-                                val videoId = extractVideoId(item.url)
+                                val videoId = resolveStreamId(item.url)
                                 val thumbnail = ThumbnailUrlResolver.normalizeVideoThumbnail(videoId, item.thumbnailUrl)
                                 val channelThumbs =
                                     try {
@@ -168,7 +170,7 @@ class SearchPagingSource(
                                     id = videoId,
                                     title = item.name ?: "",
                                     channelName = item.uploaderName ?: "",
-                                    channelId = extractChannelId(item.uploaderUrl ?: ""),
+                                    channelId = resolveChannelId(item.uploaderUrl ?: ""),
                                     thumbnailUrl = thumbnail,
                                     duration = item.duration.toInt(),
                                     viewCount = item.viewCount,
@@ -178,6 +180,7 @@ class SearchPagingSource(
                                     channelThumbnailUrls = mergedChannelThumbs,
                                     isShort = ShortsClassifier.isReel(item),
                                     isLive = isLiveStream,
+                                    serviceId = service.serviceId,
                                 ).takeIf { shortsEnabled || !it.isShort }
                                     ?.takeIf { it.matchesSearchFilters() }
                                     ?.let { SearchResultItem.VideoResult(it) }
@@ -193,12 +196,13 @@ class SearchPagingSource(
 
                                 SearchResultItem.ChannelResult(
                                     Channel(
-                                        id = extractChannelId(item.url),
+                                        id = resolveChannelId(item.url),
                                         name = item.name ?: "",
                                         thumbnailUrl = thumb,
                                         subscriberCount = item.subscriberCount,
                                         description = item.description ?: "",
                                         url = item.url ?: "",
+                                        serviceId = service.serviceId,
                                     ),
                                 )
                             }
@@ -213,10 +217,11 @@ class SearchPagingSource(
 
                                 SearchResultItem.PlaylistResult(
                                     Playlist(
-                                        id = extractPlaylistId(item.url),
+                                        id = resolvePlaylistId(item.url),
                                         name = item.name ?: "",
                                         thumbnailUrl = thumb,
                                         videoCount = item.streamCount.toInt(),
+                                        serviceId = service.serviceId,
                                     ),
                                 )
                             }
@@ -228,7 +233,7 @@ class SearchPagingSource(
                     }
 
                 // All tab (unfiltered): shorts sit in a shelf NewPipe skips; surface them
-                // as a horizontal shelf after the top result (first page only).
+                // as a horizontal shelf after the top result (first page only). YouTube-only shelf.
                 val unfilteredAll =
                     searchFilter == null || (
                         searchFilter.contentType == ContentType.ALL &&
@@ -236,7 +241,7 @@ class SearchPagingSource(
                             searchFilter.sortType == SortType.RELEVANCE
                     )
                 val combined =
-                    if (page == null && unfilteredAll && shortsEnabled) {
+                    if (page == null && unfilteredAll && shortsEnabled && isYouTube) {
                         val shorts = fetchShortVideos().take(15)
                         when {
                             shorts.isEmpty() -> items
@@ -246,7 +251,7 @@ class SearchPagingSource(
                     } else {
                         items
                     }
-                val enrichedCombined = enrichCollabVideoResults(combined)
+                val enrichedCombined = if (isYouTube) enrichCollabVideoResults(combined) else combined
 
                 Log.d(TAG, "Loaded ${items.size} items | query='$query' | nextPage=${infoPage.nextPage != null}")
 
@@ -408,6 +413,28 @@ class SearchPagingSource(
             .substringAfter("list=")
             .substringBefore("&")
             .ifEmpty { url.substringAfterLast("/").substringBefore("?") }
+
+    /** Resolves a stream item's id via the service's own link handler when it isn't YouTube. */
+    private fun resolveStreamId(url: String): String =
+        if (isYouTube) {
+            extractVideoId(url)
+        } else {
+            runCatching { service.streamLHFactory.getId(url) }.getOrDefault(url.substringAfterLast("/").substringBefore("?"))
+        }
+
+    private fun resolveChannelId(url: String): String =
+        if (isYouTube || url.isBlank()) {
+            extractChannelId(url)
+        } else {
+            runCatching { service.channelLHFactory.getId(url) }.getOrDefault(extractChannelId(url))
+        }
+
+    private fun resolvePlaylistId(url: String): String =
+        if (isYouTube) {
+            extractPlaylistId(url)
+        } else {
+            runCatching { service.playlistLHFactory.getId(url) }.getOrDefault(extractPlaylistId(url))
+        }
 
     private fun SearchResultItem.contentIdentityKey(): String =
         when (this) {

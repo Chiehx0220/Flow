@@ -1,6 +1,8 @@
 package io.github.aedev.flow.ui
 
 import io.github.aedev.flow.data.local.DEFAULT_NAV_TAB_ORDER
+import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.ServiceList
 import java.net.URI
 import java.net.URLEncoder
 
@@ -48,19 +50,39 @@ internal fun navRouteForIndex(index: Int): String = when (index) {
     else -> "home"
 }
 
-internal fun youtubeChannelUrl(channelIdOrHandle: String): String? {
+internal fun youtubeChannelUrl(
+    channelIdOrHandle: String,
+    serviceId: Int = ServiceList.YouTube.serviceId,
+): String? {
     val value = channelIdOrHandle.trim()
     if (value.isEmpty()) return null
+    if (value.startsWith("http://") || value.startsWith("https://")) return normalizeYoutubeChannelUrl(value)
+    if (serviceId != ServiceList.YouTube.serviceId) {
+        // Bare id for a non-YouTube service (e.g. Bilibili's numeric "mid") - resolve through that
+        // service's own link handler instead of assuming a YouTube URL shape.
+        return runCatching { NewPipe.getService(serviceId).channelLHFactory.getUrl(value) }.getOrNull()
+    }
     return when {
-        value.startsWith("http://") || value.startsWith("https://") -> normalizeYoutubeChannelUrl(value)
         value.startsWith("UC") -> "https://www.youtube.com/channel/$value"
         value.startsWith("@") -> "https://www.youtube.com/$value"
         else -> "https://www.youtube.com/@$value"
     }
 }
 
-internal fun youtubeChannelRoute(channelIdOrHandle: String): String? =
-    youtubeChannelUrl(channelIdOrHandle)?.let { channelUrl ->
+internal fun videoUrl(
+    videoId: String,
+    serviceId: Int = ServiceList.YouTube.serviceId,
+): String {
+    if (serviceId == ServiceList.YouTube.serviceId) return "https://www.youtube.com/watch?v=$videoId"
+    return runCatching { NewPipe.getService(serviceId).streamLHFactory.getUrl(videoId) }
+        .getOrDefault("https://www.youtube.com/watch?v=$videoId")
+}
+
+internal fun youtubeChannelRoute(
+    channelIdOrHandle: String,
+    serviceId: Int = ServiceList.YouTube.serviceId,
+): String? =
+    youtubeChannelUrl(channelIdOrHandle, serviceId)?.let { channelUrl ->
         "channel?url=${URLEncoder.encode(channelUrl, Charsets.UTF_8.name())}"
     }
 

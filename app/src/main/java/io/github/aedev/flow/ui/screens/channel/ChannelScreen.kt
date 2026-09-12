@@ -410,7 +410,11 @@ private fun ChannelContent(
     val sortedVideos: List<Video> = allVideos
     val sortedLive: List<Video> = allLiveVideos
 
-    val visibleTabs = ChannelTab.visible(shortsEnabled = shortsContentEnabled)
+    val visibleTabs =
+        ChannelTab.visible(
+            shortsEnabled = shortsContentEnabled,
+            isYouTube = channelInfo.serviceId == org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId,
+        )
     val tabTitles = visibleTabs.map { stringResource(it.titleRes) }
 
     val pagerState =

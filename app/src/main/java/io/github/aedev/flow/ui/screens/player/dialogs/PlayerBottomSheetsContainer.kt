@@ -107,11 +107,12 @@ fun PlayerBottomSheetsContainer(
             onDismiss = { screenState.showQuickActions = false },
             onShare = {
                 screenState.showQuickActions = false
+                val resolvedShareUrl = io.github.aedev.flow.ui.videoUrl(completeVideo.id, completeVideo.serviceId)
                 val shareText =
                     if (shareWithoutText) {
-                        context.getString(R.string.share_link_only_template, completeVideo.id)
+                        context.getString(R.string.share_link_only_template, resolvedShareUrl)
                     } else {
-                        context.getString(R.string.check_out_video_template, completeVideo.title, completeVideo.id)
+                        context.getString(R.string.check_out_video_template, completeVideo.title, resolvedShareUrl)
                     }
                 val shareIntent =
                     Intent(Intent.ACTION_SEND).apply {

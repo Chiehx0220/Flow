@@ -32,7 +32,9 @@ data class Video(
     val collaborators: List<VideoCollaborator> = emptyList(),
     // Transient: when this video was added to the playlist currently being viewed. Not persisted
     // on the video row — populated only by playlist-scoped queries.
-    val addedAtInPlaylist: Long? = null
+    val addedAtInPlaylist: Long? = null,
+    // org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube (default, keeps old data/call sites valid).
+    val serviceId: Int = 0
 )
 
 data class Channel(
@@ -43,7 +45,8 @@ data class Channel(
     val description: String = "",
     val isSubscribed: Boolean = false,
     val isMusic: Boolean = false,
-    val url: String = "" // Full channel URL for navigation
+    val url: String = "", // Full channel URL for navigation
+    val serviceId: Int = 0
 )
 
 data class Playlist(
@@ -53,7 +56,8 @@ data class Playlist(
     val videoCount: Int,
     val description: String = "",
     val videos: List<Video> = emptyList(),
-    val isLocal: Boolean = true
+    val isLocal: Boolean = true,
+    val serviceId: Int = 0
 )
 data class Comment(
     val id: String,

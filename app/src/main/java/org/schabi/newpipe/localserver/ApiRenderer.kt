@@ -211,7 +211,7 @@ object ApiRenderer {
             "authorThumbnail",
             if (HtmlRendererCommon.hasThumbnail(item.uploaderAvatarUrl)) HtmlRendererCommon.getThumbnailUrl(item.uploaderAvatarUrl) else "",
         )
-        json.put("text", item.commentText ?: "")
+        json.put("text", item.commentText.content ?: "")
         json.put("likeCount", item.likeCount.coerceAtLeast(0))
         json.put("publishedTime", item.textualUploadDate ?: "")
         json.put("isPinned", item.isPinned)

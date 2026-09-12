@@ -248,6 +248,7 @@ class SubscriptionsViewModel
                         subscriberCount = 0L,
                         isSubscribed = true,
                         isMusic = sub.isMusic,
+                        serviceId = sub.serviceId,
                     )
                 }
             _uiState.update { it.copy(subscribedChannels = channels) }

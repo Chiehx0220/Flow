@@ -356,11 +356,12 @@ fun VideoInfoContent(
         onCollaboratorClick = onChannelClick,
         onSaveClick = { showAddToPlaylistDialog = true },
         onShareClick = {
+            val resolvedShareUrl = io.github.aedev.flow.ui.videoUrl(video.id, video.serviceId)
             val shareText =
                 if (shareWithoutText) {
-                    context.getString(R.string.share_link_only_template, video.id)
+                    context.getString(R.string.share_link_only_template, resolvedShareUrl)
                 } else {
-                    context.getString(R.string.check_out_video_template, resolvedVideoTitle, video.id)
+                    context.getString(R.string.check_out_video_template, resolvedVideoTitle, resolvedShareUrl)
                 }
             val shareIntent =
                 Intent(Intent.ACTION_SEND).apply {

@@ -1119,7 +1119,7 @@ object HtmlRendererWatch {
             val authorEscaped = HtmlRendererCommon.escapeHtml(item.uploaderName)
             // Description.content is real HTML (<br>, <a href>), same as .media-description above
             // - not plain text, so it's rendered unescaped rather than double-escaped.
-            val commentTextHtml = item.commentText ?: ""
+            val commentTextHtml = item.commentText.content ?: ""
             val timeText = HtmlRendererCommon.formatUploadDate(item.uploadDate, item.textualUploadDate ?: "")
             val likeCountText = if (item.likeCount > 0) HtmlRendererCommon.formatCount(item.likeCount.toLong()) else ""
 

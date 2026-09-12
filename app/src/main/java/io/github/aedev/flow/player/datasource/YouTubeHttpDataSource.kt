@@ -50,6 +50,14 @@ class YouTubeHttpDataSource private constructor(
 
     companion object {
         private const val TAG = "YouTubeHttpDataSource"
+
+        // Matches the desktop UA the already-verified-working localserver Bilibili CDN proxy uses
+        // (see LocalHttpServer.kt) — kept identical rather than reusing the mobile default below,
+        // since it's unconfirmed whether Bilibili's Akamai edges care about the UA shape.
+        private const val BILIBILI_USER_AGENT =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+                "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
         private val clientLock = Any()
 
         @Volatile
@@ -85,9 +93,12 @@ class YouTubeHttpDataSource private constructor(
     override fun open(dataSpec: DataSpec): Long {
         currentUri = dataSpec.uri
 
+        val isBili = isBilibiliCdnUri(dataSpec.uri)
         val requestUserAgent =
             if (isYouTubeUri(dataSpec.uri)) {
                 resolveYouTubeUserAgent(dataSpec.uri)
+            } else if (isBili) {
+                BILIBILI_USER_AGENT
             } else {
                 userAgent
             }
@@ -100,6 +111,8 @@ class YouTubeHttpDataSource private constructor(
         requestHeaders.putAll(defaultRequestProperties)
         if (isYouTubeUri(dataSpec.uri)) {
             requestHeaders.putAll(youtubeHeaders())
+        } else if (isBili) {
+            requestHeaders.putAll(bilibiliHeaders())
         }
         if (requestHeaders.isNotEmpty()) {
             factory.setDefaultRequestProperties(requestHeaders)
@@ -109,12 +122,16 @@ class YouTubeHttpDataSource private constructor(
         return try {
             dataSource!!.open(dataSpec)
         } catch (e: HttpDataSource.InvalidResponseCodeException) {
-            if (e.responseCode == 403) logForbidden(dataSpec)
+            if (e.responseCode == 403) logForbidden(dataSpec, isBili, requestHeaders.keys)
             throw e
         }
     }
 
-    private fun logForbidden(dataSpec: DataSpec) {
+    private fun logForbidden(
+        dataSpec: DataSpec,
+        isBili: Boolean,
+        sentHeaderNames: Set<String>,
+    ) {
         val uri = dataSpec.uri
         val expire = uri.getQueryParameter("expire")?.toLongOrNull()
         val nowSec = System.currentTimeMillis() / 1000
@@ -124,15 +141,19 @@ class YouTubeHttpDataSource private constructor(
                 expire < nowSec -> "expire=PASSED ${nowSec - expire}s ago"
                 else -> "expire=valid ${expire - nowSec}s left"
             }
+        // Temporary extra detail for diagnosing the Bilibili CDN 403 investigation: which host
+        // actually 403'd, whether it was recognized as Bilibili, and which headers we sent.
         Log.w(
             TAG,
-            "HTTP 403 c=${uri.getQueryParameter("c")} itag=${uri.getQueryParameter("itag")} " +
+            "HTTP 403 host=${uri.host} isBili=$isBili sentHeaders=$sentHeaderNames " +
+                "c=${uri.getQueryParameter("c")} itag=${uri.getQueryParameter("itag")} " +
                 "mime=${uri.getQueryParameter("mime")} pot=${uri.getQueryParameter("pot") != null} " +
                 "range=${dataSpec.position}+${dataSpec.length} $expiry",
         )
         PlayerDiagnostics.logWarning(
             TAG,
-            "403 c=${uri.getQueryParameter("c")} itag=${uri.getQueryParameter("itag")} " +
+            "403 host=${uri.host} isBili=$isBili sentHeaders=$sentHeaderNames " +
+                "c=${uri.getQueryParameter("c")} itag=${uri.getQueryParameter("itag")} " +
                 "pot=${uri.getQueryParameter("pot") != null} range=${dataSpec.position}+${dataSpec.length} $expiry",
         )
     }
@@ -170,6 +191,16 @@ class YouTubeHttpDataSource private constructor(
             host.contains("ytimg.com")
     }
 
+    // Broader than BilibiliService.isBiliBiliDownloadUrl() in the extractor (which only checks
+    // "bilivideo.com"/"akamaized.net"): Bilibili also serves from *.mcdn.bilivideo.cn edge/P2P
+    // mirrors (note the .cn, not .com), so match on "bilivideo" generally to catch those too.
+    // These CDN edges hotlink-check Referer (and, for some streams, the session cookie) and 403
+    // without them — unrelated to (and not covered by) isYouTubeUri above.
+    private fun isBilibiliCdnUri(uri: Uri): Boolean {
+        val host = uri.host ?: return false
+        return host.contains("bilivideo") || host.contains("akamaized.net")
+    }
+
     // The fetching UA must match the client that minted the URL (`c=` param) — a mismatch is a
     // known cause of mid-stream 403s on googlevideo CDNs.
     private fun resolveYouTubeUserAgent(uri: Uri): String =
@@ -199,5 +230,17 @@ class YouTubeHttpDataSource private constructor(
             "Accept-Encoding" to "identity",
             // Accept header for video content
             "Accept" to "*/*",
+        )
+
+    /**
+     * Bilibili's CDN 403s without a same-site Referer (see [isBilibiliCdnUri]). Deliberately no
+     * Cookie header — matches the already-verified-working localserver Bilibili CDN proxy (see
+     * LocalHttpServer.kt), which sends only User-Agent/Referer/Origin; an earlier attempt that
+     * added a Cookie here still 403'd, so it's left out.
+     */
+    private fun bilibiliHeaders(): Map<String, String> =
+        mapOf(
+            "Origin" to "https://www.bilibili.com",
+            "Referer" to "https://www.bilibili.com/",
         )
 }

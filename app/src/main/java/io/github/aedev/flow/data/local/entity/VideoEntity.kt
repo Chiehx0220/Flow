@@ -18,7 +18,8 @@ data class VideoEntity(
     val channelThumbnailUrl: String,
     val timestamp: Long = System.currentTimeMillis(),
     val savedAt: Long = System.currentTimeMillis(), // For ordering in generic lists
-    val isMusic: Boolean = false
+    val isMusic: Boolean = false,
+    val serviceId: Int = 0
 ) {
     fun toDomain(): Video {
         return Video(
@@ -33,7 +34,8 @@ data class VideoEntity(
             description = description,
             channelThumbnailUrl = channelThumbnailUrl,
             timestamp = timestamp,
-            isMusic = isMusic
+            isMusic = isMusic,
+            serviceId = serviceId
         )
     }
 
@@ -51,7 +53,8 @@ data class VideoEntity(
                 description = video.description,
                 channelThumbnailUrl = video.channelThumbnailUrl,
                 timestamp = video.timestamp,
-                isMusic = video.isMusic
+                isMusic = video.isMusic,
+                serviceId = video.serviceId
             )
         }
     }

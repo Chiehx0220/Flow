@@ -97,6 +97,7 @@ class SubscriptionFeedRepository
                     rssSubscriptionService
                         .fetchSubscriptionVideos(
                             channelIds = plan.channelIds,
+                            serviceIdByChannel = plan.serviceIdByChannel,
                             maxTotal = MAX_SUBSCRIPTION_CACHE_ITEMS,
                             knownVideoIds = if (plan.isFullRefresh) emptySet() else allCached.mapTo(HashSet()) { it.id },
                             onProgress = { done, _ -> processed = done },
@@ -240,6 +241,24 @@ class SubscriptionFeedRepository
             Log.d(TAG, "Seeded ${rows.size} row(s) for $channelId from the notification check")
         }
 
+        /**
+         * Same as [seedFromNotificationCheck] above, for services with no RSS shortcut at all
+         * (e.g. Bilibili) whose background check already resolved full [Video] rows via the
+         * channel-tabs path rather than parsing a feed.
+         */
+        suspend fun seedFromNotificationCheck(videos: List<Video>) {
+            if (videos.isEmpty()) return
+            val now = System.currentTimeMillis()
+            val cutoff = now - SUBSCRIPTION_CACHE_WINDOW_MS
+            val rows = videos.filter { it.timestamp > cutoff }.map { it.toEntity(now) }
+            if (rows.isEmpty()) return
+
+            withContext(PerformanceDispatcher.diskIO) {
+                cacheDao.insertSubscriptionFeedIfAbsent(rows)
+            }
+            Log.d(TAG, "Seeded ${rows.size} row(s) from the non-YouTube notification check")
+        }
+
         /** Writes back metadata the on-demand player lookup resolved for already-cached rows. */
         suspend fun updateEnrichedMetadata(videos: Collection<Video>) {
             if (videos.isEmpty()) return
@@ -289,6 +308,7 @@ private fun SubscriptionFeedEntity.toVideo() =
         isShort = isShort,
         isLive = isLive && uploadDate.containsLiveMarker(),
         isUpcoming = isUpcoming,
+        serviceId = serviceId,
     )
 
 private fun Video.toEntity(cachedAtMillis: Long) =
@@ -307,6 +327,7 @@ private fun Video.toEntity(cachedAtMillis: Long) =
         isLive = isLive,
         isUpcoming = isUpcoming,
         cachedAt = cachedAtMillis,
+        serviceId = serviceId,
     )
 
 private fun ChannelRssEntry.toEntity(

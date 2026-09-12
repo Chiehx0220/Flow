@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.schabi.newpipe.extractor.ServiceList
 
 internal data class ChannelCommunityUiState(
     val posts: List<CommunityPost> = emptyList(),
@@ -33,6 +34,7 @@ internal class ChannelCommunityController(
         val id: String,
         val name: String,
         val avatarUrl: String,
+        val serviceId: Int,
     )
 
     private val _state = MutableStateFlow(ChannelCommunityUiState())
@@ -40,13 +42,22 @@ internal class ChannelCommunityController(
 
     private var channel: ChannelContext? = null
 
-    fun reset(channelId: String, channelName: String, avatarUrl: String) {
-        channel = ChannelContext(channelId, channelName, avatarUrl)
+    fun reset(
+        channelId: String,
+        channelName: String,
+        avatarUrl: String,
+        serviceId: Int = ServiceList.YouTube.serviceId,
+    ) {
+        channel = ChannelContext(channelId, channelName, avatarUrl, serviceId)
         _state.value = ChannelCommunityUiState()
     }
 
+    /** Community Posts is a YouTube-only concept - other services have no equivalent here. */
+    fun isSupportedForCurrentChannel(): Boolean = channel?.serviceId == ServiceList.YouTube.serviceId
+
     fun ensurePostsLoaded() {
         val channelSnapshot = channel ?: return
+        if (channelSnapshot.serviceId != ServiceList.YouTube.serviceId) return
         val stateSnapshot = _state.value
         if (stateSnapshot.postsLoaded || stateSnapshot.isLoadingPosts) return
 

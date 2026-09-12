@@ -46,6 +46,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.channel.ChannelInfo
 import org.schabi.newpipe.extractor.channel.ChannelTabInfo
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
@@ -266,8 +267,9 @@ class ChannelViewModel
                     val channelInfo =
                         withTimeoutOrNull(20_000L) {
                             withContext(PerformanceDispatcher.networkIO) {
-                                // Use NewPipe to fetch channel info
-                                ChannelInfo.getInfo(NewPipe.getService(0), normalizedUrl)
+                                // Use NewPipe to fetch channel info — resolve the service from the
+                                // URL itself so non-YouTube channels (e.g. Bilibili) work too.
+                                ChannelInfo.getInfo(NewPipe.getServiceByUrl(normalizedUrl), normalizedUrl)
                             }
                         }
 
@@ -296,8 +298,10 @@ class ChannelViewModel
                         channelInfo.avatars.maxByOrNull { it.height }?.url
                             ?: channelInfo.avatars.firstOrNull()?.url
                             ?: ""
-                    communityController.reset(channelId, channelInfo.name, channelAvatar)
-                    loadChannelVideoCount(channelId, channelInfo.name, channelAvatar)
+                    communityController.reset(channelId, channelInfo.name, channelAvatar, channelInfo.serviceId)
+                    if (channelInfo.serviceId == ServiceList.YouTube.serviceId) {
+                        loadChannelVideoCount(channelId, channelInfo.name, channelAvatar)
+                    }
                     if (_uiState.value.selectedTab == POSTS_TAB_INDEX) {
                         communityController.ensurePostsLoaded()
                     }
@@ -437,7 +441,7 @@ class ChannelViewModel
                         _playlistsPagingFlow.value =
                             Pager(
                                 config = PagingConfig(pageSize = 20, enablePlaceholders = false),
-                                pagingSourceFactory = { ChannelPlaylistsPagingSource(currentPlaylistsTab) },
+                                pagingSourceFactory = { ChannelPlaylistsPagingSource(currentPlaylistsTab, channelInfo.serviceId) },
                             ).flow.cachedIn(viewModelScope)
                     }
 
@@ -491,6 +495,7 @@ class ChannelViewModel
                             channelName = channelName,
                             channelThumbnail = channelThumbnail,
                             subscribedAt = System.currentTimeMillis(),
+                            serviceId = channelInfo.serviceId,
                         )
                     subscriptionRepository.subscribe(subscription)
                 }
@@ -639,8 +644,17 @@ class ChannelViewModel
             kind: TabKind,
             sortToken: String?,
         ) {
-            val channelId = _uiState.value.channelId ?: return
             val channelInfo = _uiState.value.channelInfo
+            if ((channelInfo?.serviceId ?: ServiceList.YouTube.serviceId) != ServiceList.YouTube.serviceId) {
+                // The sorted/paginated loader below is built on YouTube's private InnerTube API
+                // (io.github.aedev.flow.innertube.YouTube) and has no notion of other services.
+                // Live has no Bilibili equivalent in this app yet; Videos gets a plain single-page
+                // fetch through the generic extractor instead.
+                if (kind == TabKind.Videos) loadNonYouTubeVideosTab(channelInfo)
+                return
+            }
+
+            val channelId = _uiState.value.channelId ?: return
             val channelName = channelInfo?.name.orEmpty()
             val avatar =
                 channelInfo
@@ -705,6 +719,33 @@ class ChannelViewModel
         }
 
         /**
+         * Videos tab for a non-YouTube service (e.g. Bilibili), fetched through the generic
+         * extractor's [ChannelTabInfo] rather than YouTube's InnerTube API. Single page only for
+         * now - no continuation/infinite-scroll support here yet, unlike the YouTube path above.
+         */
+        private suspend fun loadNonYouTubeVideosTab(channelInfo: ChannelInfo?) {
+            val tab = currentVideosTab ?: return
+            val serviceId = channelInfo?.serviceId ?: return
+            _isLoadingAllVideos.value = true
+            try {
+                val tabInfo =
+                    withContext(PerformanceDispatcher.networkIO) {
+                        ChannelTabInfo.getInfo(NewPipe.getService(serviceId), tab)
+                    }
+                _videosAll.value =
+                    tabInfo.relatedItems
+                        .filterIsInstance<StreamInfoItem>()
+                        .map { it.toChannelVideo(channelInfo) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Non-YouTube videos tab load failed", e)
+            } finally {
+                _isLoadingAllVideos.value = false
+            }
+        }
+
+        /**
          * Live streams have their own continuation entry point. Paging them through the plain video
          * one loses the live marker, so every past broadcast past the first page would render as an
          * ordinary upload.
@@ -736,12 +777,22 @@ class ChannelViewModel
         }
 
         private fun StreamInfoItem.toChannelVideo(channelInfo: ChannelInfo): Video {
+            val isYouTube = channelInfo.serviceId == ServiceList.YouTube.serviceId
             val videoId =
-                when {
-                    url.contains("v=") -> url.substringAfter("v=").substringBefore("&")
-                    url.contains("/watch/") -> url.substringAfter("/watch/").substringBefore("?")
-                    url.contains("/shorts/") -> url.substringAfter("/shorts/").substringBefore("?")
-                    else -> url.substringAfterLast("/").substringBefore("?")
+                if (!isYouTube) {
+                    // Other services' ids (e.g. Bilibili's "BVxxxxxxxxxx?p=1") don't fit the
+                    // YouTube-shaped patterns below - resolve through the service's own link
+                    // handler instead of guessing at URL structure.
+                    runCatching {
+                        NewPipe.getService(channelInfo.serviceId).streamLHFactory.getId(url)
+                    }.getOrDefault(url.substringAfterLast("/").substringBefore("?"))
+                } else {
+                    when {
+                        url.contains("v=") -> url.substringAfter("v=").substringBefore("&")
+                        url.contains("/watch/") -> url.substringAfter("/watch/").substringBefore("?")
+                        url.contains("/shorts/") -> url.substringAfter("/shorts/").substringBefore("?")
+                        else -> url.substringAfterLast("/").substringBefore("?")
+                    }
                 }
             val thumbnail = ThumbnailUrlResolver.normalizeVideoThumbnail(videoId, thumbnailUrl)
             val absoluteUploadTimestamp = uploadDate?.offsetDateTime()?.toInstant()?.toEpochMilli()
@@ -769,6 +820,7 @@ class ChannelViewModel
                 uploadDate = displayUploadDate,
                 timestamp = uploadTimestamp,
                 description = "",
+                serviceId = channelInfo.serviceId,
             )
         }
 

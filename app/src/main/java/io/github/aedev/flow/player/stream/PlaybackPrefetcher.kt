@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.schabi.newpipe.extractor.ServiceList
 
 /**
  * Starts stream extraction the moment a video is tapped, ahead of the player screen composing and
@@ -31,9 +32,17 @@ object PlaybackPrefetcher {
      *
      * Local media plays from a `content://` URI and never touches extraction, so those ids are
      * ignored rather than sent through a client ladder that would certainly fail.
+     *
+     * [InnerTubeVideoStreamExtractor] only talks to YouTube's private API - for any other
+     * [serviceId] (e.g. Bilibili) warming it would just fail after a full client-ladder timeout, so
+     * it's skipped; that service's actual player load goes through the generic extractor instead.
      */
-    fun prefetch(videoId: String) {
+    fun prefetch(
+        videoId: String,
+        serviceId: Int = ServiceList.YouTube.serviceId,
+    ) {
         if (videoId.isBlank() || videoId.startsWith("local_")) return
+        if (serviceId != ServiceList.YouTube.serviceId) return
         synchronized(lock) {
             if (inFlightVideoId == videoId && inFlight?.isActive == true) return
             // Only the most recently tapped video is worth warming. Leaving an abandoned one

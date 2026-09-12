@@ -62,7 +62,7 @@ class ChannelVideosPagingSource(
 
                 if (page == null) {
                     // Initial load - get from tab info
-                    val tabInfo = ChannelTabInfo.getInfo(NewPipe.getService(0), videosTab)
+                    val tabInfo = ChannelTabInfo.getInfo(NewPipe.getService(channelInfo.serviceId), videosTab)
                     nextPage = tabInfo.nextPage
 
                     // Convert items to videos
@@ -73,7 +73,7 @@ class ChannelVideosPagingSource(
                     Log.d(TAG, "Initial load: ${videos.size} videos, hasNextPage: ${nextPage != null}")
                 } else {
                     // Load more - use the page token
-                    val moreItems = ChannelTabInfo.getMoreItems(NewPipe.getService(0), videosTab, page)
+                    val moreItems = ChannelTabInfo.getMoreItems(NewPipe.getService(channelInfo.serviceId), videosTab, page)
                     nextPage = moreItems.nextPage
 
                     // Convert items to videos
@@ -137,6 +137,7 @@ class ChannelVideosPagingSource(
             isUpcoming = this.streamType == org.schabi.newpipe.extractor.stream.StreamType.NONE,
             isLive = this.streamType == org.schabi.newpipe.extractor.stream.StreamType.LIVE_STREAM,
             isShort = ShortsClassifier.isReel(this),
+            serviceId = channelInfo.serviceId,
         )
     }
 

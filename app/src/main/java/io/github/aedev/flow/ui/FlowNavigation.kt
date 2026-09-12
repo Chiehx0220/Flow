@@ -207,7 +207,7 @@ fun NavGraphBuilder.flowAppGraph(
                 if (channel.isMusic && channel.id.isNotBlank()) {
                     navController.navigate("artist/${channel.id}")
                 } else {
-                    navController.navigateToYoutubeChannel(channel.url.ifBlank { channel.id })
+                    navController.navigateToYoutubeChannel(channel.url.ifBlank { channel.id }, channel.serviceId)
                 }
             },
         )
@@ -302,7 +302,7 @@ fun NavGraphBuilder.flowAppGraph(
                 if (video.isShort && !disableShortsPlayer) {
                     navController.openShorts(ShortsQueueSource.SeededFeed(video.id))
                 } else {
-                    navController.navigateToPlayer(video.id)
+                    navController.navigateToPlayer(video.id, video.serviceId)
                 }
             },
             onShortsQueue = { source ->
@@ -314,7 +314,7 @@ fun NavGraphBuilder.flowAppGraph(
                 }
             },
             onChannelClick = { channel ->
-                navController.navigateToYoutubeChannel(channel.url.ifBlank { channel.id })
+                navController.navigateToYoutubeChannel(channel.url.ifBlank { channel.id }, channel.serviceId)
             },
             onPlaylistClick = { playlist ->
                 navController.navigate("playlist/${playlist.id}")
@@ -1290,8 +1290,15 @@ fun NavGraphBuilder.flowAppGraph(
     }
 
     composable(
-        route = "player/{videoId}",
-        arguments = listOf(navArgument("videoId") { type = NavType.StringType }),
+        route = "player/{videoId}?serviceId={serviceId}",
+        arguments =
+            listOf(
+                navArgument("videoId") { type = NavType.StringType },
+                navArgument("serviceId") {
+                    type = NavType.IntType
+                    defaultValue = org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId
+                },
+            ),
         deepLinks =
             listOf(
                 navDeepLink {
@@ -1342,6 +1349,8 @@ fun NavGraphBuilder.flowAppGraph(
                 !videoId.isNullOrEmpty() && videoId != "sample" -> videoId
                 else -> "jNQXAC9IVRw"
             }
+        val effectiveServiceId =
+            backStackEntry.arguments?.getInt("serviceId") ?: org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId
 
         // Use passed state
         val playerUiState = playerUiStateResult.value
@@ -1362,6 +1371,7 @@ fun NavGraphBuilder.flowAppGraph(
                         uploadDate = "",
                         description = "",
                         channelThumbnailUrl = "",
+                        serviceId = effectiveServiceId,
                     )
                 playerViewModel.playVideo(placeholder)
                 GlobalPlayerState.setCurrentVideo(placeholder)

@@ -39,5 +39,6 @@ data class HomeFeedCacheEntity(
     val relatedSeedId: String?,
     val cachedAt: Long,
     val expiresAt: Long,
-    val orderIndex: Int
+    val orderIndex: Int,
+    val serviceId: Int = 0
 )

@@ -75,6 +75,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.stream.*
 import javax.inject.Inject
 
@@ -130,6 +132,9 @@ class VideoPlayerViewModel
         private var activeLoadJob: Job? = null
         private var playbackLoadToken: Long = 0L
         private var loadingVideoId: String? = null
+
+        /** Service (org.schabi.newpipe.extractor.ServiceList id) of the video currently loading/loaded. */
+        private var currentServiceId: Int = ServiceList.YouTube.serviceId
         private var playbackAbandonedVideoId: String? = null
         private var clearedUnplayableVideoId: String? = null
         private var channelMetadataJob: Job? = null
@@ -379,6 +384,7 @@ class VideoPlayerViewModel
                                 channelName = video?.channelName.orEmpty(),
                                 channelId = video?.channelId.orEmpty(),
                                 isShort = video?.isShort == true,
+                                serviceId = video?.serviceId ?: currentServiceId,
                             )
                         }
                         player.pause()
@@ -816,7 +822,7 @@ class VideoPlayerViewModel
                     upcomingReleaseTimeMs = null,
                 )
             }
-            loadVideoInfo(video.id, isWifi = detectIsWifi(), forceRefresh = true)
+            loadVideoInfo(video.id, isWifi = detectIsWifi(), forceRefresh = true, serviceId = video.serviceId)
         }
 
         /**
@@ -900,7 +906,7 @@ class VideoPlayerViewModel
                 return
             }
             // Start loading streams
-            loadVideoInfo(video.id, isWifi = detectIsWifi(), forceRefresh = true)
+            loadVideoInfo(video.id, isWifi = detectIsWifi(), forceRefresh = true, serviceId = video.serviceId)
         }
 
         fun playLocalVideo(
@@ -1206,7 +1212,9 @@ class VideoPlayerViewModel
             forceRefresh: Boolean = false,
             escalateToSabr: Boolean = false,
             resumePositionOverrideMs: Long? = null,
+            serviceId: Int = currentServiceId,
         ) {
+            currentServiceId = serviceId
             if (isLocalMediaId(videoId)) {
                 Log.d("VideoPlayerViewModel", "loadVideoInfo: $videoId is a local file — skipping all network loading")
                 return
@@ -1331,7 +1339,7 @@ class VideoPlayerViewModel
                                         attempt++
                                         info =
                                             withTimeoutOrNull(10_000L) {
-                                                repository.getVideoStreamInfo(videoId)
+                                                repository.getVideoStreamInfo(videoId, NewPipe.getService(serviceId))
                                             }
                                         if (info == null && attempt < maxAttempts) {
                                             Log.w(
@@ -1363,8 +1371,15 @@ class VideoPlayerViewModel
                                 Pair(info, lastError)
                             }
 
+                        // InnerTubeVideoStreamExtractor talks to YouTube's private web API directly - it
+                        // has no notion of other services and will always fail (after wasting a full
+                        // client-ladder timeout) for a non-YouTube id like Bilibili's "BVxxxxxxxxxx".
+                        // Skip it entirely off-YouTube so those videos resolve purely through the
+                        // generic extractor path (streamInfoDeferred above) instead of racing a
+                        // guaranteed loser.
                         val innerTubeDeferred =
                             async(PerformanceDispatcher.networkIO) {
+                                if (serviceId != ServiceList.YouTube.serviceId) return@async null
                                 try {
                                     if (escalateToSabr) {
                                         InnerTubeVideoStreamExtractor.extract(videoId, forceSabr = escalateToSabr)
@@ -3002,6 +3017,7 @@ class VideoPlayerViewModel
                     channelName = video.channelName,
                     channelId = video.channelId,
                     isShort = video.isShort,
+                    serviceId = video.serviceId,
                 )
             }
         }
@@ -3015,6 +3031,7 @@ class VideoPlayerViewModel
             channelName: String = "",
             channelId: String = "",
             isShort: Boolean = false,
+            serviceId: Int = currentServiceId,
         ) {
             val isLocal = isLocalMediaId(videoId)
             viewModelScope.launch {
@@ -3028,6 +3045,7 @@ class VideoPlayerViewModel
                     channelId = channelId,
                     isShort = isShort,
                     isLocal = isLocal,
+                    serviceId = serviceId,
                 )
             }
             if (!isLocal && !isShort && duration > 0) {
@@ -3177,6 +3195,7 @@ class VideoPlayerViewModel
                             channelId = channelId,
                             channelName = channelName,
                             channelThumbnail = channelThumbnail,
+                            serviceId = currentServiceId,
                         ),
                     )
                     _uiState.value = _uiState.value.copy(isSubscribed = true)
@@ -3365,7 +3384,7 @@ class VideoPlayerViewModel
                         }
                     }
                     if (_uiState.value.cachedVideo?.id != videoId) return@launch
-                    val (comments, nextPage) = repository.getComments(videoId)
+                    val (comments, nextPage) = repository.getComments(videoId, NewPipe.getService(currentServiceId))
                     if (_uiState.value.cachedVideo?.id != videoId) return@launch
                     _commentsState.value = comments.distinctByNonBlankKey(Comment::id)
                     commentsNextPage = nextPage
@@ -3384,7 +3403,7 @@ class VideoPlayerViewModel
             viewModelScope.launch {
                 _isLoadingMoreComments.value = true
                 try {
-                    val (newComments, newNextPage) = repository.getMoreComments(videoId, nextPage)
+                    val (newComments, newNextPage) = repository.getMoreComments(videoId, nextPage, NewPipe.getService(currentServiceId))
                     _commentsState.value =
                         _commentsState.value.mergeDistinctByNonBlankKey(
                             newComments,

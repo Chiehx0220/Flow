@@ -120,6 +120,7 @@ class QuickActionsViewModel
             channelId: String,
             channelName: String,
             channelThumbnail: String,
+            serviceId: Int = org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId,
         ) {
             viewModelScope.launch {
                 try {
@@ -142,6 +143,7 @@ class QuickActionsViewModel
                                 channelName = channelName,
                                 channelThumbnail = resolvedThumbnail,
                                 subscribedAt = System.currentTimeMillis(),
+                                serviceId = serviceId,
                             ),
                         )
                         _subscribedChannelIds.update { it + channelId }

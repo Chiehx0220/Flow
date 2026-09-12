@@ -62,6 +62,8 @@ import io.github.aedev.flow.utils.formatViewCount
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.ServiceList
 
 @OptIn(FlowPreview::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -317,19 +319,26 @@ fun SearchScreen(
                     dismissKeyboard()
                     liveSuggestions = emptyList()
 
-                    val videoId = extractVideoId(queryText)
-                    if (videoId != null) {
+                    val resolved = resolvePastedVideoLink(queryText)
+                    if (resolved != null) {
+                        val (videoId, serviceId) = resolved
                         navigateToVideo(
                             Video(
                                 id = videoId,
                                 title = context.getString(R.string.shared_video),
                                 channelName = context.getString(R.string.shared_video),
                                 channelId = "",
-                                thumbnailUrl = "https://img.youtube.com/vi/$videoId/maxresdefault.jpg",
+                                thumbnailUrl =
+                                    if (serviceId == ServiceList.YouTube.serviceId) {
+                                        "https://img.youtube.com/vi/$videoId/maxresdefault.jpg"
+                                    } else {
+                                        ""
+                                    },
                                 duration = 0,
                                 viewCount = 0L,
                                 uploadDate = "",
                                 channelThumbnailUrl = "",
+                                serviceId = serviceId,
                             ),
                         )
                         return@SearchBarRow
@@ -353,6 +362,15 @@ fun SearchScreen(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
         )
 
+        SearchServiceSwitcher(
+            selectedServiceId = uiState.serviceId,
+            onServiceSelected = { serviceId ->
+                dismissKeyboard()
+                viewModel.setService(serviceId)
+            },
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        )
+
         AnimatedVisibility(
             visible =
                 isSearchFocused && searchQuery.text.isNotEmpty() &&
@@ -369,19 +387,26 @@ fun SearchScreen(
                     setSearchQueryToEnd(s)
                     liveSuggestions = emptyList()
 
-                    val videoId = extractVideoId(s)
-                    if (videoId != null) {
+                    val resolved = resolvePastedVideoLink(s)
+                    if (resolved != null) {
+                        val (videoId, serviceId) = resolved
                         navigateToVideo(
                             Video(
                                 id = videoId,
                                 title = context.getString(R.string.shared_video),
                                 channelName = context.getString(R.string.shared_video),
                                 channelId = "",
-                                thumbnailUrl = "https://img.youtube.com/vi/$videoId/maxresdefault.jpg",
+                                thumbnailUrl =
+                                    if (serviceId == ServiceList.YouTube.serviceId) {
+                                        "https://img.youtube.com/vi/$videoId/maxresdefault.jpg"
+                                    } else {
+                                        ""
+                                    },
                                 duration = 0,
                                 viewCount = 0L,
                                 uploadDate = "",
                                 channelThumbnailUrl = "",
+                                serviceId = serviceId,
                             ),
                         )
                     } else {
@@ -496,6 +521,7 @@ fun SearchScreen(
                                 navigateToChannel,
                                 navigateToPlaylist,
                                 dismissKeyboard,
+                                viewModel,
                             )
                         } else {
                             SearchResultList(
@@ -507,6 +533,7 @@ fun SearchScreen(
                                 navigateToChannel,
                                 navigateToPlaylist,
                                 dismissKeyboard,
+                                viewModel,
                             )
                         }
                     }
@@ -542,6 +569,34 @@ private fun isSupportedVideoUrl(url: String): Boolean {
         lower.contains("invidious") ||
         lower.contains("yewtu.be")
 }
+
+/**
+ * Resolves a pasted URL to (videoId, serviceId), trying the fast YouTube-specific regex path
+ * first (proven, zero regression risk), then falling back to the extractor's own per-service
+ * URL resolution so links from other services (e.g. Bilibili) work too.
+ */
+private fun resolvePastedVideoLink(url: String): Pair<String, Int>? {
+    extractVideoId(url)?.let { return it to ServiceList.YouTube.serviceId }
+    if (!url.startsWith("http")) return null
+    return runCatching {
+        val service = NewPipe.getServiceByUrl(url)
+        val id = service.streamLHFactory.getId(url)
+        id to service.serviceId
+    }.getOrNull()
+}
+
+/** Builds a channel URL for the given service, falling back to the YouTube shape. */
+private fun channelUrlFor(
+    serviceId: Int,
+    channelId: String,
+): String =
+    if (serviceId == ServiceList.YouTube.serviceId) {
+        "https://www.youtube.com/channel/$channelId"
+    } else {
+        runCatching {
+            NewPipe.getService(serviceId).channelLHFactory.getUrl(channelId)
+        }.getOrDefault("https://www.youtube.com/channel/$channelId")
+    }
 
 @Composable
 private fun SearchBarRow(
@@ -697,6 +752,32 @@ private fun SearchBarRow(
                     )
                 }
             }
+        }
+    }
+}
+
+/** Two pills to pick which streaming service search/paste-link resolution runs against. */
+@Composable
+private fun SearchServiceSwitcher(
+    selectedServiceId: Int,
+    onServiceSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val options =
+        listOf(
+            ServiceList.YouTube.serviceId to "YouTube",
+            ServiceList.BiliBili.serviceId to "Bilibili",
+        )
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        options.forEach { (serviceId, label) ->
+            FilterChip(
+                selected = selectedServiceId == serviceId,
+                onClick = { onServiceSelected(serviceId) },
+                label = { Text(label) },
+            )
         }
     }
 }
@@ -979,7 +1060,9 @@ private fun SearchResultList(
     onChannelClick: (Channel) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
     dismissKeyboard: () -> Unit,
+    viewModel: SearchViewModel,
 ) {
+    val coroutineScope = rememberCoroutineScope()
     LazyVerticalGrid(
         state = gridState,
         columns = GridCells.Fixed(columns),
@@ -1034,17 +1117,22 @@ private fun SearchResultList(
                         modifier = Modifier.padding(vertical = 4.dp),
                         onClick = { onVideoClick(item.video) },
                         onChannelClick = { channelId ->
-                            onChannelClick(
-                                Channel(
-                                    id = channelId,
-                                    name = item.video.channelName,
-                                    thumbnailUrl =
-                                        item.video.channelThumbnailUrl
-                                            ?: "",
-                                    subscriberCount = 0,
-                                    url = "https://www.youtube.com/channel/$channelId",
-                                ),
-                            )
+                            if (channelId.isNotBlank()) {
+                                onChannelClick(
+                                    Channel(
+                                        id = channelId,
+                                        name = item.video.channelName,
+                                        thumbnailUrl = item.video.channelThumbnailUrl,
+                                        subscriberCount = 0,
+                                        url = channelUrlFor(item.video.serviceId, channelId),
+                                        serviceId = item.video.serviceId,
+                                    ),
+                                )
+                            } else {
+                                coroutineScope.launch {
+                                    viewModel.resolveChannelForVideo(item.video)?.let(onChannelClick)
+                                }
+                            }
                         },
                     )
                 }
@@ -1097,7 +1185,9 @@ private fun SearchResultGrid(
     onChannelClick: (Channel) -> Unit,
     onPlaylistClick: (Playlist) -> Unit,
     dismissKeyboard: () -> Unit,
+    viewModel: SearchViewModel,
 ) {
+    val coroutineScope = rememberCoroutineScope()
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         state = gridState,
@@ -1142,17 +1232,22 @@ private fun SearchResultGrid(
                             onVideoClick(item.video)
                         },
                         onChannelClick = { channelId ->
-                            onChannelClick(
-                                Channel(
-                                    id = channelId,
-                                    name = item.video.channelName,
-                                    thumbnailUrl =
-                                        item.video.channelThumbnailUrl
-                                            ?: "",
-                                    subscriberCount = 0,
-                                    url = "https://www.youtube.com/channel/$channelId",
-                                ),
-                            )
+                            if (channelId.isNotBlank()) {
+                                onChannelClick(
+                                    Channel(
+                                        id = channelId,
+                                        name = item.video.channelName,
+                                        thumbnailUrl = item.video.channelThumbnailUrl,
+                                        subscriberCount = 0,
+                                        url = channelUrlFor(item.video.serviceId, channelId),
+                                        serviceId = item.video.serviceId,
+                                    ),
+                                )
+                            } else {
+                                coroutineScope.launch {
+                                    viewModel.resolveChannelForVideo(item.video)?.let(onChannelClick)
+                                }
+                            }
                         },
                     )
                 }
