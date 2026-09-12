@@ -245,6 +245,7 @@ private fun VideoHistoryEntry.toResumeVideo(): Video =
         duration = (duration / MILLIS_PER_SECOND).toInt(),
         viewCount = 0L,
         uploadDate = "",
+        serviceId = serviceId,
     )
 
 @OptIn(ExperimentalMaterial3Api::class)

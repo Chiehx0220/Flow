@@ -168,7 +168,8 @@ class ViewHistory private constructor(private val context: Context) {
                 channelName  = entry.channelName,
                 channelId    = entry.channelId,
                 isMusic      = entry.isMusic,
-                isShort      = entry.isShort
+                isShort      = entry.isShort,
+                serviceId    = entry.serviceId,
             )
         }
         dao.insertAll(entities)

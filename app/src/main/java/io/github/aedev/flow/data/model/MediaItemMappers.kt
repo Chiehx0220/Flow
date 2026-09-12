@@ -28,6 +28,7 @@ fun VideoHistoryEntry.toVideo(): Video =
         uploadDate = "",
         timestamp = timestamp,
         isShort = isShort,
+        serviceId = serviceId,
     )
 
 fun LikedVideoInfo.toMusicTrack(): MusicTrack =

@@ -228,6 +228,7 @@ class BackupRepository(
                         viewCount = 0L,
                         uploadDate = "",
                         timestamp = entry.timestamp,
+                        serviceId = entry.serviceId,
                     )
                 }.take(500)
                 .toList()

@@ -92,6 +92,7 @@ internal class WatchSessionTracker(
                 channelName = video.channelName,
                 channelId = video.channelId,
                 isShort = video.isShort,
+                serviceId = video.serviceId,
             )
         }
     }

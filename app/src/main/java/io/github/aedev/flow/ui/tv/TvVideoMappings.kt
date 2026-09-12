@@ -18,6 +18,7 @@ internal fun VideoHistoryEntry.toTvVideo(): Video =
         timestamp = timestamp,
         isMusic = isMusic,
         isShort = isShort,
+        serviceId = serviceId,
     )
 
 /**
