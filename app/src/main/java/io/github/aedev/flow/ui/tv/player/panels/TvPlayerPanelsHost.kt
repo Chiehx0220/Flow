@@ -57,8 +57,8 @@ import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.state.SubtitleOption
-import io.github.aedev.flow.ui.components.parseHtmlDescription
 import io.github.aedev.flow.ui.components.shared.VideoThumbnailImage
+import io.github.aedev.flow.ui.components.shared.parseHtmlDescription
 import io.github.aedev.flow.ui.screens.player.VideoPlayerViewModel
 import io.github.aedev.flow.ui.tv.components.TvButton
 import io.github.aedev.flow.ui.tv.components.TvCard
@@ -663,7 +663,7 @@ private fun TvLiveChatPanelContent(viewModel: VideoPlayerViewModel) {
 
 @Composable
 private fun TvLiveChatMessages(
-    uiState: io.github.aedev.flow.ui.screens.player.VideoPlayerUiState,
+    uiState: io.github.aedev.flow.ui.screens.player.state.VideoPlayerUiState,
     listState: androidx.compose.foundation.lazy.LazyListState,
 ) {
     when {
