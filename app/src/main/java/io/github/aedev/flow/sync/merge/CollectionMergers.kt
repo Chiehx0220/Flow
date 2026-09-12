@@ -33,8 +33,7 @@ object WatchHistoryMerger {
     ): CanonicalWatchHistory {
         val primary = Crdt.preferByHlc(x, x.hlc, y, y.hlc) { contentKey(it) }
         val secondary = if (primary === x) y else x
-        return CanonicalWatchHistory(
-            videoId = x.videoId,
+        return primary.copy(
             title = Crdt.ifEmptyOther(primary.title, secondary.title),
             channelName = Crdt.ifEmptyOther(primary.channelName, secondary.channelName),
             channelId = Crdt.ifEmptyOther(primary.channelId, secondary.channelId),
@@ -134,8 +133,7 @@ object SubscribedChannelsMerger {
     ): CanonicalSubscribedChannel {
         val winner = Crdt.preferByHlc(x, x.hlc, y, y.hlc) { contentKey(it) }
         val loser = if (winner === x) y else x
-        return CanonicalSubscribedChannel(
-            channelId = x.channelId,
+        return winner.copy(
             // Display metadata survives from whichever side actually has it: a tombstone carries
             // none, so a re-subscribe must not blank the name and avatar.
             name = Crdt.ifEmptyOther(winner.name, loser.name),
