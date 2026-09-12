@@ -9,6 +9,7 @@ import org.schabi.newpipe.extractor.exceptions.ContentNotAvailableException
 import org.schabi.newpipe.extractor.exceptions.ContentNotSupportedException
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.exceptions.GeographicRestrictionException
+import org.schabi.newpipe.extractor.exceptions.UnsupportedContentInCountryException
 import org.schabi.newpipe.extractor.exceptions.PaidContentException
 import org.schabi.newpipe.extractor.exceptions.PrivateContentException
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException
@@ -80,7 +81,8 @@ object VideoErrorMapper {
                 )
             }
 
-            throwable is GeographicRestrictionException -> {
+            throwable is GeographicRestrictionException ||
+                throwable is UnsupportedContentInCountryException -> {
                 VideoError(
                     message = context.getString(R.string.error_geo_restricted),
                     hint = context.getString(R.string.error_geo_restricted_hint),
