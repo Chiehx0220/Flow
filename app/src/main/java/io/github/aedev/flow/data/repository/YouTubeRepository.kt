@@ -2,6 +2,7 @@ package io.github.aedev.flow.data.repository
 
 import android.util.Log
 import android.util.LruCache
+import io.github.aedev.flow.data.comments.CommentsPageResult
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.Video
@@ -12,6 +13,8 @@ import io.github.aedev.flow.data.shorts.ShortsClassifier
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.models.SongItem
 import io.github.aedev.flow.innertube.models.response.WatchMetadataResponse
+import io.github.aedev.flow.innertube.pages.VideoDescriptionPage
+import io.github.aedev.flow.player.stream.InFlightRequestCoalescer
 import io.github.aedev.flow.utils.PerformanceDispatcher
 import io.github.aedev.flow.utils.RelativeUploadDateParser
 import io.github.aedev.flow.utils.SearchFilterResolver
@@ -22,8 +25,10 @@ import io.github.aedev.flow.utils.distinctBestImageUrls
 import io.github.aedev.flow.utils.newPipeContentCountry
 import io.github.aedev.flow.utils.newPipeLocalization
 import io.github.aedev.flow.utils.parseToTimestamp
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -32,6 +37,7 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.json.JsonElement
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.ServiceList
@@ -55,6 +61,20 @@ class YouTubeRepository
         private val channelReelIndex: ChannelReelIndex,
     ) {
         private val service = ServiceList.YouTube
+
+        private val returnYouTubeDislikeCoalescer =
+            InFlightRequestCoalescer<String, ReturnYouTubeDislikeCounts?>(
+                CoroutineScope(SupervisorJob() + Dispatchers.IO),
+            )
+
+        private val watchNextCoalescer =
+            InFlightRequestCoalescer<String, JsonElement?>(
+                CoroutineScope(SupervisorJob() + Dispatchers.IO),
+            )
+
+        // The comment section, the attributed description and the related lane all read one watch
+        // response, so it is fetched once per video and held for the few videos in play.
+        private val watchNextCache = LruCache<String, JsonElement>(WATCH_NEXT_CACHE_SIZE)
 
         // Cache for channel avatar URLs to avoid redundant network calls
         private val channelAvatarCache = LruCache<String, String>(300)
@@ -1056,6 +1076,86 @@ class YouTubeRepository
             }
 
         /**
+         * The web watch response for [videoId], fetched once and shared.
+         *
+         * Returns null when the request fails; callers fall back to whatever they used before
+         * rather than failing the surface.
+         */
+        suspend fun watchNextResponse(videoId: String): JsonElement? {
+            watchNextCache.get(videoId)?.let { return it }
+            return watchNextCoalescer.run(videoId) {
+                YouTube
+                    .watchNextJson(videoId)
+                    .getOrNull()
+                    ?.also { watchNextCache.put(videoId, it) }
+            }
+        }
+
+        /** The watch page description for [videoId], or null when the response could not be read. */
+        suspend fun getVideoDescription(videoId: String): VideoDescriptionPage? =
+            withContext(Dispatchers.IO) {
+                val response = watchNextResponse(videoId) ?: return@withContext null
+                YouTube.videoDescription(response, videoId).takeIf { !it.isEmpty }
+            }
+
+        /**
+         * The first page of a video's comments, in the order [sortToken] names, or the section's
+         * own default when it is null.
+         *
+         * Falls back to the extractor when InnerTube returns nothing, so a schema change degrades
+         * the section instead of emptying it.
+         */
+        suspend fun getVideoComments(
+            videoId: String,
+            sortToken: String? = null,
+            serviceId: Int = ServiceList.YouTube.serviceId,
+        ): CommentsPageResult =
+            withContext(Dispatchers.IO) {
+                // InnerTube is YouTube's own private web API - it has no notion of other services,
+                // so a non-YouTube video goes straight to the generic extractor path below.
+                if (serviceId == ServiceList.YouTube.serviceId) {
+                    val token =
+                        sortToken
+                            ?: watchNextResponse(videoId)?.let(YouTube::commentsContinuation)
+                    val page = token?.let { YouTube.comments(it, videoId).getOrNull() }
+                    if (page != null && page.comments.isNotEmpty()) {
+                        return@withContext CommentsPageResult(
+                            comments = page.comments,
+                            continuation = page.continuation,
+                            sortOptions = page.sortOptions,
+                            totalText = page.totalText,
+                            totalCount = page.totalCount,
+                        )
+                    }
+                    Log.i(TAG, "InnerTube comments empty for $videoId, falling back to the extractor")
+                }
+                val (comments, legacyPage) = getComments(videoId, NewPipe.getService(serviceId))
+                CommentsPageResult(comments = comments, legacyPage = legacyPage)
+            }
+
+        suspend fun getMoreVideoComments(
+            videoId: String,
+            continuation: String,
+            serviceId: Int = ServiceList.YouTube.serviceId,
+        ): CommentsPageResult =
+            withContext(Dispatchers.IO) {
+                if (serviceId != ServiceList.YouTube.serviceId) return@withContext CommentsPageResult.EMPTY
+                val page = YouTube.comments(continuation, videoId).getOrNull() ?: return@withContext CommentsPageResult.EMPTY
+                CommentsPageResult(comments = page.comments, continuation = page.continuation)
+            }
+
+        suspend fun getVideoCommentReplies(
+            videoId: String,
+            continuation: String,
+            serviceId: Int = ServiceList.YouTube.serviceId,
+        ): CommentsPageResult =
+            withContext(Dispatchers.IO) {
+                if (serviceId != ServiceList.YouTube.serviceId) return@withContext CommentsPageResult.EMPTY
+                val page = YouTube.commentReplies(continuation, videoId).getOrNull() ?: return@withContext CommentsPageResult.EMPTY
+                CommentsPageResult(comments = page.comments, continuation = page.continuation)
+            }
+
+        /**
          * Fetch the first page of comments for a video.
          * Returns the comments and a next-page token (null if no more pages).
          */
@@ -1116,6 +1216,7 @@ class YouTubeRepository
         suspend fun getCommentReplies(
             url: String,
             repliesPage: Page,
+            service: StreamingService = this.service,
         ): Pair<List<Comment>, Page?> =
             withContext(Dispatchers.IO) {
                 try {
@@ -1272,6 +1373,25 @@ class YouTubeRepository
                     .distinctBy { it.id }
             } catch (e: Exception) {
                 emptyList()
+            }
+
+        /** Like and dislike counts from the Return YouTube Dislike archive. */
+        data class ReturnYouTubeDislikeCounts(
+            val likes: Long?,
+            val dislikes: Long?,
+        )
+
+        /**
+         * One request per video id: the player asks for this from both the stream load and the live
+         * metadata refresh, and both want the same response.
+         */
+        suspend fun returnYouTubeDislikeCounts(videoId: String): ReturnYouTubeDislikeCounts? =
+            returnYouTubeDislikeCoalescer.run(videoId) {
+                val response = YouTube.returnYouTubeDislike(videoId).getOrNull() ?: return@run null
+                ReturnYouTubeDislikeCounts(
+                    likes = response.likes?.toLong()?.takeIf { it >= 0L },
+                    dislikes = response.dislikes?.toLong(),
+                )
             }
 
         data class LiveWatchMetadata(
@@ -1669,6 +1789,7 @@ class YouTubeRepository
             private const val COMMENT_AVATAR_FETCH_CONCURRENCY = 4
             private const val COMMENT_AVATAR_FETCH_TIMEOUT_MS = 6_000L
             private const val REEL_INDEX_TIMEOUT_MS = 3_000L
+            private const val WATCH_NEXT_CACHE_SIZE = 3
 
             @Volatile
             private var instance: YouTubeRepository? = null

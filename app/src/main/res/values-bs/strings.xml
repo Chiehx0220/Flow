@@ -92,7 +92,7 @@
     <string name="unsubscribed_from">Otpreplaćen od %s</string>
     <string name="unsubscribe">Otpreplati se</string>
     <string name="share_video">Podijeli video</string>
-    <string name="check_out_video_template">Pogledaj ovaj video: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="check_out_video_template">Pogledaj ovaj video: %1$s\n%2$s</string>
     <string name="related_videos">Srodni videi</string>
     <string name="quality_auto">Automatski</string>
     <string name="quality_auto_template">Automatski (%1$dp)</string>

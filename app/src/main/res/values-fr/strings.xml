@@ -91,7 +91,7 @@
     <string name="subscribed_to">Abonné à %s</string>
     <string name="unsubscribed_from">Désabonné de %s</string>
     <string name="share_video">Partager la vidéo</string>
-    <string name="check_out_video_template">Découvrez cette vidéo : %1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="check_out_video_template">Découvrez cette vidéo : %1$s\n%2$s</string>
     <string name="related_videos">Vidéos similaires</string>
     <string name="quality_auto">Auto</string>
     <string name="quality_auto_template">Auto (%1$dp)</string>
@@ -1669,7 +1669,7 @@
     <string name="history_tab_local_music">Musique locale</string>
     <string name="deep_flow_save_history_title">Ajouter à l\'historique</string>
     <string name="deep_flow_save_history_subtitle">Conserver les vidéos visionnées dans l\'historique (avec la progression). Le moteur ne s\'en servira toutefois pas pour s\'améliorer. Désactivé = rien n\'est enregistré.</string>
-    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
+    <string name="share_link_only_template">%1$s</string>
     <string name="content_settings_share_without_text_title">Partager des liens sans texte</string>
     <string name="content_settings_share_without_text_subtitle">Partagez uniquement le lien vers la vidéo, sans le message « Regardez cette vidéo »</string>
     <string name="icon_name_flow_play">Flow Lecture</string>

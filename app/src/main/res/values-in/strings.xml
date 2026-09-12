@@ -204,7 +204,7 @@
     <string name="unsubscribed_from">Berhenti berlangganan dari %s</string>
     <string name="unsubscribe">Berhenti Berlangganan</string>
     <string name="share_video">Bagikan video</string>
-    <string name="check_out_video_template">Lihat video ini: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="check_out_video_template">Lihat video ini: %1$s\n%2$s</string>
     <string name="related_videos">Video Terkait</string>
     <string name="video_marked_not_interested">Video ditandai sebagai tidak diminati</string>
     <string name="play_mode_suggestion_title">Saran Mode Putar</string>
@@ -1623,7 +1623,7 @@
     <string name="local_media_grant">Berikan akses</string>
     <string name="history_tab_local_videos">Video bawaan</string>
     <string name="history_tab_local_music">Musik bawaan</string>
-    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
+    <string name="share_link_only_template">%1$s</string>
     <string name="content_settings_share_without_text_title">Bagikan tautan tanpa teks</string>
     <string name="content_settings_share_without_text_subtitle">Bagikan hanya tautan video, tanpa pesan “Check out this video”</string>
     <string name="deep_flow_save_history_title">Simpan untuk melihat riwayat tontonan</string>

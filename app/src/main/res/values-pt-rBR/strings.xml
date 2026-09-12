@@ -97,7 +97,7 @@
     <string name="unsubscribed_from">Inscrição cancelada de %s</string>
     <string name="unsubscribe">Cancelar inscrição</string>
     <string name="share_video">Compartilhar vídeo</string>
-    <string name="check_out_video_template">Confira este vídeo: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="check_out_video_template">Confira este vídeo: %1$s\n%2$s</string>
     <string name="video_marked_not_interested">Vídeo marcado como não interessado</string>
     <string name="play_mode_suggestion_title">Sugestão de Modo de Reprodução</string>
     <string name="play_mode_suggestion_body">Este vídeo tem menos de 2 minutos de duração. Você gostaria de mudar para um reprodutor especializado?</string>
@@ -314,7 +314,7 @@
     <string name="playlist_sort_date_added_oldest">Data de adição (mais antigo)</string>
     <string name="playlist_sort_date_published_oldest">Data de publicação (mais antigo)</string>
     <string name="refresh_lyrics">Atualizar letra</string>
-    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
+    <string name="share_link_only_template">%1$s</string>
     <string name="content_settings_share_without_text_title">Compartilhar links sem texto</string>
     <string name="content_settings_share_without_text_subtitle">Compartilhe apenas o link do vídeo, sem a mensagem \"Confira este vídeo\"</string>
     <plurals name="channels_count">
@@ -2409,4 +2409,147 @@
     <string name="lyrics_no_sources_found">Nenhuma letra foi encontrada nas fontes</string>
     <string name="lyrics_source_edited">Editado</string>
     <string name="lyrics_current_source">Fonte atual: %1$s</string>
+    <string name="cd_short_watched">Assistido</string>
+    <string name="sync_collection_subscription_groups">Grupos de inscrições</string>
+    <string name="sync_collection_subscription_groups_body">As pastas em que você organiza seus canais.</string>
+    <string name="sync_qr_advertised_address">Este dispositivo: %1$s</string>
+    <string name="sync_step_title_send">Enviar</string>
+    <string name="sync_step_title_receive">Receber</string>
+    <string name="sync_step_title_pair">Parear dispositivos</string>
+    <string name="sync_step_title_scan">Ler código QR</string>
+    <string name="sync_step_title_code">Conectar dispositivos</string>
+    <string name="sync_step_title_verify">Verificar</string>
+    <string name="sync_step_title_merge">Mesclar</string>
+    <string name="sync_step_title_syncing">Sincronizar</string>
+    <string name="sync_send_option_body">Copiar a biblioteca deste dispositivo para outro dispositivo.</string>
+    <string name="sync_receive_option_body">Copiar a biblioteca de outro dispositivo para este dispositivo.</string>
+    <string name="sync_select_all">Selecionar tudo</string>
+    <string name="sync_select_none">Limpar</string>
+    <string name="sync_collection_playlists_body">Suas playlists, álbuns e Assistir mais Tarde.</string>
+    <string name="sync_collection_watch_history_body">O que você assistiu e até onde você chegou.</string>
+    <string name="sync_collection_likes_body">Vídeos e músicas curtidas e não curtidas.</string>
+    <string name="sync_collection_subscriptions_body">Os canais que você segue.</string>
+    <string name="subscriptions_failed_channels_copy_logs">Copiar registros</string>
+    <string name="content_settings_channel_group_badge_title">Mostrar grupo nos avatares dos canais</string>
+    <string name="content_settings_channel_group_badge_subtitle">Etiquetas de canais e avatares de artistas com o grupo de inscrição a que pertencem</string>
+    <string name="channel_add_to_group">Adicionar ao grupo</string>
+    <string name="channel_groups_sheet_title">Grupos de canais</string>
+    <string name="channel_groups_empty">Nenhum grupo ainda</string>
+    <string name="style_thick">Grosso</string>
+    <string name="lyrics_display_header">Tela</string>
+    <string name="style_compact">Compacto</string>
+    <string name="style_wavy">Ondulado</string>
+    <plurals name="view_replies_template">
+        <item quantity="one">Ver %1$d resposta</item>
+        <item quantity="many">Ver %1$d de respostas</item>
+        <item quantity="other">Ver %1$d respostas</item>
+    </plurals>
+    <plurals name="videos_curated_template">
+        <item quantity="one">%1$d vídeo selecionado apenas para você</item>
+        <item quantity="many">%1$d de vídeos selecionados apenas para você</item>
+        <item quantity="other">%1$d vídeos selecionados apenas para você</item>
+    </plurals>
+    <plurals name="videos_count_template">
+        <item quantity="one">%1$d vídeo</item>
+        <item quantity="many">%1$d de vídeos</item>
+        <item quantity="other">%1$d vídeos</item>
+    </plurals>
+    <plurals name="songs_count_template">
+        <item quantity="one">%1$d música</item>
+        <item quantity="many">%1$d de músicas</item>
+        <item quantity="other">%1$d músicas</item>
+    </plurals>
+    <plurals name="deep_flow_duration_hours">
+        <item quantity="one">%1$d hora</item>
+        <item quantity="many">%1$d de horas</item>
+        <item quantity="other">%1$d horas</item>
+    </plurals>
+    <plurals name="appearance_themes_count_all">
+        <item quantity="one">%1$d tema</item>
+        <item quantity="many">%1$d de temas</item>
+        <item quantity="other">%1$d temas</item>
+    </plurals>
+    <plurals name="lyrics_providers_enabled">
+        <item quantity="one">%1$d / %2$d provedor ativado</item>
+        <item quantity="many">%1$d / %2$d de provedores ativados</item>
+        <item quantity="other">%1$d / %2$d provedores ativados</item>
+    </plurals>
+    <string name="content_settings_home_columns_title">Cartões por linha</string>
+    <string name="content_settings_home_columns_subtitle">Acompanha automaticamente o tamanho da tela. Escolha um número para mantê-lo fixo.</string>
+    <string name="content_settings_home_columns_auto">Automático</string>
+    <plurals name="player_settings_shorts_playback_mode_auto_interval_summary">
+        <item quantity="one">Rolar automaticamente após %1$d segundo</item>
+        <item quantity="many">Rolar automaticamente após %1$d de segundos</item>
+        <item quantity="other">Rolar automaticamente após %1$d segundos</item>
+    </plurals>
+    <plurals name="player_settings_shorts_auto_scroll_seconds_template">
+        <item quantity="one">%1$d segundo</item>
+        <item quantity="many">%1$d de segundos</item>
+        <item quantity="other">%1$d segundos</item>
+    </plurals>
+    <plurals name="player_settings_autoplay_countdown_seconds_template">
+        <item quantity="one">%1$d segundo</item>
+        <item quantity="many">%1$d de segundos</item>
+        <item quantity="other">%1$d segundos</item>
+    </plurals>
+    <plurals name="player_settings_double_tap_seek_subtitle">
+        <item quantity="one">%1$d segundo por clique duplo</item>
+        <item quantity="many">%1$d de segundos por clique duplo</item>
+        <item quantity="other">%1$d segundos por clique duplo</item>
+    </plurals>
+    <plurals name="topics_count_template">
+        <item quantity="one">%1$d tópico</item>
+        <item quantity="many">%1$d de tópicos</item>
+        <item quantity="other">%1$d tópicos</item>
+    </plurals>
+    <plurals name="topics_blocked_count_plural">
+        <item quantity="one">%1$d tópico</item>
+        <item quantity="many">%1$d de tópico</item>
+        <item quantity="other">%1$d tópicos</item>
+    </plurals>
+    <plurals name="selected_count_template">
+        <item quantity="one">%1$d selecionado</item>
+        <item quantity="many">%1$d selecionados</item>
+        <item quantity="other">%1$d selecionados</item>
+    </plurals>
+    <plurals name="every_min_template">
+        <item quantity="one">A cada %1$d min</item>
+        <item quantity="many">A cada %1$d min</item>
+        <item quantity="other">A cada %1$d min</item>
+    </plurals>
+    <plurals name="every_minutes_template">
+        <item quantity="one">A cada %1$d minuto</item>
+        <item quantity="many">A cada %1$d de minutos</item>
+        <item quantity="other">A cada %1$d minutos</item>
+    </plurals>
+    <plurals name="sleep_timer_minutes">
+        <item quantity="one">%1$d minuto</item>
+        <item quantity="many">%1$d de minutos</item>
+        <item quantity="other">%1$d minutos</item>
+    </plurals>
+    <plurals name="currently_searches_template">
+        <item quantity="one">Atualmente: %1$d busca</item>
+        <item quantity="many">Atualmente: %1$d de buscas</item>
+        <item quantity="other">Atualmente: %1$d buscas</item>
+    </plurals>
+    <plurals name="delete_after_days_template">
+        <item quantity="one">Excluir após %1$d dia</item>
+        <item quantity="many">Excluir após %1$d de dias</item>
+        <item quantity="other">Excluir após %1$d dias</item>
+    </plurals>
+    <plurals name="delete_older_than_template">
+        <item quantity="one">Excluir pesquisas mais velhas que %1$d dia</item>
+        <item quantity="many">Excluir pesquisas mais velhas que %1$d de dias</item>
+        <item quantity="other">Excluir pesquisas mais velhas que %1$d dias</item>
+    </plurals>
+    <plurals name="searches_count_template">
+        <item quantity="one">%1$d pesquisa</item>
+        <item quantity="many">%1$d de pesquisas</item>
+        <item quantity="other">%1$d pesquisas</item>
+    </plurals>
+    <plurals name="days_count_template">
+        <item quantity="one">%1$d dia</item>
+        <item quantity="many">%1$d de dias</item>
+        <item quantity="other">%1$d dias</item>
+    </plurals>
 </resources>

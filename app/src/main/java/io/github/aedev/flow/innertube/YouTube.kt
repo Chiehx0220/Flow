@@ -12,6 +12,7 @@ import io.github.aedev.flow.innertube.models.MediaInfo
 import io.github.aedev.flow.innertube.models.MusicCarouselShelfRenderer
 import io.github.aedev.flow.innertube.models.MusicShelfRenderer
 import io.github.aedev.flow.innertube.models.PlaylistItem
+import io.github.aedev.flow.innertube.models.ReturnYouTubeDislikeResponse
 import io.github.aedev.flow.innertube.models.Run
 import io.github.aedev.flow.innertube.models.Runs
 import io.github.aedev.flow.innertube.models.SearchSuggestions
@@ -69,13 +70,19 @@ import io.github.aedev.flow.innertube.pages.SearchSummary
 import io.github.aedev.flow.innertube.pages.SearchSummaryPage
 import io.github.aedev.flow.innertube.pages.SearchVideosPage
 import io.github.aedev.flow.innertube.pages.ShortsPage
+import io.github.aedev.flow.innertube.pages.VideoCommentsPage
+import io.github.aedev.flow.innertube.pages.VideoDescriptionPage
 import io.github.aedev.flow.innertube.pages.channelSortOptions
 import io.github.aedev.flow.innertube.pages.toChannelShortsPage
+import io.github.aedev.flow.innertube.pages.toCommentRepliesPage
 import io.github.aedev.flow.innertube.pages.toCommunityCommentsPage
 import io.github.aedev.flow.innertube.pages.toCommunityPostsPage
 import io.github.aedev.flow.innertube.pages.toSearchShorts
 import io.github.aedev.flow.innertube.pages.toSearchVideosPage
 import io.github.aedev.flow.innertube.pages.toShortsPage
+import io.github.aedev.flow.innertube.pages.toVideoCommentsPage
+import io.github.aedev.flow.innertube.pages.toVideoDescriptionPage
+import io.github.aedev.flow.innertube.pages.videoCommentsContinuation
 import io.github.aedev.flow.utils.avatarImageIdentityKey
 import io.ktor.client.call.body
 import io.ktor.client.statement.bodyAsText
@@ -2474,6 +2481,46 @@ object YouTube {
                 .body<PlayerResponse>()
         }
 
+    /**
+     * The raw web watch response for [videoId].
+     *
+     * The comment section, the attributed description and the related lane all read this one
+     * response, so callers go through the cache that wraps it rather than requesting it each.
+     */
+    suspend fun watchNextJson(videoId: String): Result<JsonElement> =
+        runCatching {
+            Json.parseToJsonElement(innerTube.nextWatch(videoId = videoId).bodyAsText())
+        }
+
+    /** The description, its typed spans and the figures beside it, from an already-fetched watch response. */
+    fun videoDescription(
+        watchNext: JsonElement,
+        videoId: String,
+    ): VideoDescriptionPage = watchNext.toVideoDescriptionPage(videoId)
+
+    /** The continuation that opens [videoId]'s comment section, from an already-fetched watch response. */
+    fun commentsContinuation(watchNext: JsonElement): String? = watchNext.videoCommentsContinuation()
+
+    suspend fun comments(
+        continuation: String,
+        ownVideoId: String?,
+    ): Result<VideoCommentsPage> =
+        runCatching {
+            Json
+                .parseToJsonElement(innerTube.nextWatch(continuation = continuation).bodyAsText())
+                .toVideoCommentsPage(ownVideoId)
+        }
+
+    suspend fun commentReplies(
+        continuation: String,
+        ownVideoId: String?,
+    ): Result<VideoCommentsPage> =
+        runCatching {
+            Json
+                .parseToJsonElement(innerTube.nextWatch(continuation = continuation).bodyAsText())
+                .toCommentRepliesPage(ownVideoId)
+        }
+
     suspend fun liveChatContinuation(videoId: String): Result<String?> =
         runCatching {
             innerTube
@@ -2744,6 +2791,11 @@ object YouTube {
     suspend fun getMediaInfo(videoId: String): Result<MediaInfo> =
         runCatching {
             return innerTube.getMediaInfo(videoId)
+        }
+
+    suspend fun returnYouTubeDislike(videoId: String): Result<ReturnYouTubeDislikeResponse> =
+        runCatching {
+            innerTube.returnYouTubeDislike(videoId).body<ReturnYouTubeDislikeResponse>()
         }
 
     @JvmInline

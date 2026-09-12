@@ -71,7 +71,7 @@
     <string name="subscribed_to">Suscrito a %s</string>
     <string name="unsubscribed_from">Te has dado de baja de %s</string>
     <string name="share_video">Compartir video</string>
-    <string name="check_out_video_template">Mira este video: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="check_out_video_template">Mira este video: %1$s\n%2$s</string>
     <string name="related_videos">Videos relacionados</string>
     <string name="quality_auto">Automático</string>
     <string name="video_marked_not_interested">Vídeo marcado como no interesante</string>
@@ -1616,7 +1616,7 @@
     <string name="local_media_grant">Proporcionar acceso</string>
     <string name="history_tab_local_videos">Videos locales</string>
     <string name="history_tab_local_music">Música local</string>
-    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
+    <string name="share_link_only_template">%1$s</string>
     <string name="content_settings_share_without_text_title">Compartir enlaces sin texto</string>
     <string name="shorts_player_ui_default">Predeterminada</string>
     <string name="shorts_player_ui_simple">Sencilla</string>

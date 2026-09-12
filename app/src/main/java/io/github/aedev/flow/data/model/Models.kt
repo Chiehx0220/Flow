@@ -6,7 +6,7 @@ data class VideoCollaborator(
     val name: String,
     val channelId: String = "",
     val thumbnailUrl: String = "",
-    val subscriberCountText: String = ""
+    val subscriberCountText: String = "",
 )
 
 data class Video(
@@ -45,7 +45,8 @@ data class Channel(
     val description: String = "",
     val isSubscribed: Boolean = false,
     val isMusic: Boolean = false,
-    val url: String = "", // Full channel URL for navigation
+    // Full channel URL for navigation
+    val url: String = "",
     val serviceId: Int = 0
 )
 
@@ -59,6 +60,7 @@ data class Playlist(
     val isLocal: Boolean = true,
     val serviceId: Int = 0
 )
+
 data class Comment(
     val id: String,
     val author: String,
@@ -71,16 +73,26 @@ data class Comment(
     val repliesPage: Page? = null,
     val isPinned: Boolean = false,
     val continuationToken: String? = null,
-    val authorChannelId: String = ""
+    val authorChannelId: String = "",
+    val richText: RichText? = null,
+    val likeCountText: String = "",
+    val pinnedByText: String? = null,
+    val isHearted: Boolean = false,
+    val heartedByText: String? = null,
+    val isVerified: Boolean = false,
+    val isCreator: Boolean = false,
+    val isArtist: Boolean = false,
 )
 
 data class SearchResult(
     val videos: List<Video> = emptyList(),
     val channels: List<Channel> = emptyList(),
-    val playlists: List<Playlist> = emptyList()
+    val playlists: List<Playlist> = emptyList(),
 )
 
 enum class SearchFilter {
-    ALL, VIDEOS, CHANNELS, PLAYLISTS
+    ALL,
+    VIDEOS,
+    CHANNELS,
+    PLAYLISTS,
 }
-

@@ -83,7 +83,7 @@
     <string name="unsubscribed_from">Inscrição cancelada de %s</string>
     <string name="unsubscribe">Cancelar inscrição</string>
     <string name="share_video">Partilhar vídeo</string>
-    <string name="check_out_video_template">Confira este vídeo: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="check_out_video_template">Confira este vídeo: %1$s\n%2$s</string>
     <string name="related_videos">Vídeos Relacionados</string>
     <string name="quality_auto">Automático</string>
     <string name="quality_auto_template">Automático (%1$dp)</string>

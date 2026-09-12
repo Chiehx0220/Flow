@@ -92,7 +92,7 @@
     <string name="unsubscribed_from">Вы отписались от %s</string>
     <string name="unsubscribe">Отписаться</string>
     <string name="share_video">Поделиться видео</string>
-    <string name="check_out_video_template">Посмотрите это видео: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="check_out_video_template">Посмотрите это видео: %1$s\n%2$s</string>
     <string name="related_videos">Похожие видео</string>
     <string name="quality_auto">Авто</string>
     <string name="quality_auto_template">Авто (%1$dp)</string>
@@ -1008,7 +1008,7 @@
     <string name="local_media_permission_body">Разрешите доступ к медиа, чтобы Flow мог находить и воспроизводить локальные видео и музыку.</string>
     <string name="history_tab_local_videos">Видео на устройстве</string>
     <string name="history_tab_local_music">Музыка на устройстве</string>
-    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
+    <string name="share_link_only_template">%1$s</string>
     <string name="live_chat_hide">Скрыть чат</string>
     <string name="live_chat_jump_to_latest">Переход к последнему сообщению</string>
     <string name="radio_source_template">Радио • %1$s</string>

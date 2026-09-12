@@ -115,7 +115,7 @@
     <string name="speed_2x">２倍速</string>
     <string name="cd_liked">已讚好</string>
     <string name="cd_pause">暫停</string>
-    <string name="check_out_video_template">看一下這影片：%1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="check_out_video_template">看一下這影片：%1$s\n%2$s</string>
     <string name="related_videos">相關影片</string>
     <string name="quality_auto">自動</string>
     <string name="quality_auto_template">自動（%1$dp）</string>

@@ -91,7 +91,7 @@
     <string name="unsubscribed_from">Disiscritto da %s</string>
     <string name="unsubscribe">Annulla</string>
     <string name="share_video">Condividi video</string>
-    <string name="check_out_video_template">Guarda questo video: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="check_out_video_template">Guarda questo video: %1$s\n%2$s</string>
     <string name="related_videos">Video correlati</string>
     <string name="quality_auto">Automatica</string>
     <string name="quality_auto_template">Automatica (%1$dp)</string>
@@ -1629,7 +1629,7 @@
     <string name="history_tab_local_music">Musica locale</string>
     <string name="deep_flow_save_history_title">Salva nella cronologia di visualizzazione</string>
     <string name="deep_flow_save_history_subtitle">Conserva i video visualizzati nella cronologia (con i progressi). L\'algoritmo continuerà comunque a non usarli per l\'apprendimento. Disattivato = non viene salvato nulla.</string>
-    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
+    <string name="share_link_only_template">%1$s</string>
     <string name="content_settings_share_without_text_title">Condividi link senza testo</string>
     <string name="content_settings_share_without_text_subtitle">Condividi solo il link dei video, senza il messaggio \"Dai un\'occhiata a questo video\"</string>
     <string name="player_appearance_controls_while_loading_title">Controlli durante il caricamento</string>

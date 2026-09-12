@@ -468,27 +468,11 @@ fun SearchScreen(
                 pagingItems.loadState.refresh is LoadState.Error && pagingItems.itemCount == 0
 
             BoxWithConstraints(modifier = Modifier.weight(1f)) {
-                val responsiveColumns =
-                    when {
-                        maxWidth < 700.dp -> 1
-                        maxWidth < 900.dp -> 2
-                        maxWidth < 1200.dp -> 3
-                        else -> 4
-                    }
-
-                val responsiveGridColumns =
-                    when {
-                        maxWidth < 600.dp -> 1
-                        maxWidth < 900.dp -> 2
-                        maxWidth < 1200.dp -> 3
-                        else -> 4
-                    }
-
-                val columns = if (isGridMode) responsiveGridColumns else responsiveColumns
+                val feedLayout = rememberFeedGridLayout(maxWidth)
 
                 when {
                     isInitialLoading -> {
-                        ShimmerResultsScreen(isGridMode, columns)
+                        ShimmerResultsScreen(isGridMode, feedLayout)
                     }
 
                     isInitialError -> {
@@ -504,7 +488,7 @@ fun SearchScreen(
                         SearchShortsGrid(
                             pagingItems,
                             gridState,
-                            maxOf(columns, 2),
+                            maxOf(feedLayout.columns, 2),
                             navigateToShortsQueue,
                             dismissKeyboard,
                         )
@@ -515,7 +499,7 @@ fun SearchScreen(
                             SearchResultGrid(
                                 pagingItems,
                                 gridState,
-                                columns,
+                                feedLayout,
                                 navigateToVideo,
                                 navigateToShortsQueue,
                                 navigateToChannel,
@@ -527,7 +511,7 @@ fun SearchScreen(
                             SearchResultList(
                                 pagingItems,
                                 gridState,
-                                columns,
+                                feedLayout,
                                 navigateToVideo,
                                 navigateToShortsQueue,
                                 navigateToChannel,
@@ -1054,7 +1038,7 @@ private const val SHORTS_SHELF_KEY = "shortsShelf"
 private fun SearchResultList(
     pagingItems: androidx.paging.compose.LazyPagingItems<SearchResultItem>,
     gridState: LazyGridState,
-    columns: Int,
+    feedLayout: FeedGridLayout,
     onVideoClick: (Video) -> Unit,
     onShortsShelfClick: (shelf: List<Video>, tapped: Video) -> Unit,
     onChannelClick: (Channel) -> Unit,
@@ -1065,7 +1049,7 @@ private fun SearchResultList(
     val coroutineScope = rememberCoroutineScope()
     LazyVerticalGrid(
         state = gridState,
-        columns = GridCells.Fixed(columns),
+        columns = feedLayout.cells,
         modifier =
             Modifier
                 .fillMaxSize()
@@ -1084,18 +1068,18 @@ private fun SearchResultList(
                 },
         contentPadding =
             PaddingValues(
-                start = if (columns == 1) 0.dp else 16.dp,
-                end = if (columns == 1) 0.dp else 16.dp,
+                start = if (feedLayout.columns == 1) 0.dp else 16.dp,
+                end = if (feedLayout.columns == 1) 0.dp else 16.dp,
                 top = 8.dp,
                 bottom = 90.dp,
             ),
         horizontalArrangement =
             Arrangement.spacedBy(
-                if (columns == 1) 0.dp else 12.dp,
+                if (feedLayout.columns == 1) 0.dp else 12.dp,
             ),
         verticalArrangement =
             Arrangement.spacedBy(
-                if (columns == 1) 0.dp else 12.dp,
+                if (feedLayout.columns == 1) 0.dp else 12.dp,
             ),
     ) {
         items(
@@ -1179,7 +1163,7 @@ private fun SearchResultList(
 private fun SearchResultGrid(
     pagingItems: androidx.paging.compose.LazyPagingItems<SearchResultItem>,
     gridState: LazyGridState,
-    columns: Int,
+    feedLayout: FeedGridLayout,
     onVideoClick: (Video) -> Unit,
     onShortsShelfClick: (shelf: List<Video>, tapped: Video) -> Unit,
     onChannelClick: (Channel) -> Unit,
@@ -1189,7 +1173,7 @@ private fun SearchResultGrid(
 ) {
     val coroutineScope = rememberCoroutineScope()
     LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
+        columns = feedLayout.cells,
         state = gridState,
         modifier =
             Modifier
@@ -1419,11 +1403,11 @@ private fun PagingFooter(
 @Composable
 private fun ShimmerResultsScreen(
     isGrid: Boolean,
-    columns: Int,
+    feedLayout: FeedGridLayout,
 ) {
     if (isGrid) {
         LazyVerticalGrid(
-            columns = GridCells.Fixed(columns),
+            columns = feedLayout.cells,
             contentPadding = PaddingValues(12.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -1433,26 +1417,26 @@ private fun ShimmerResultsScreen(
         }
     } else {
         LazyVerticalGrid(
-            columns = GridCells.Fixed(columns),
+            columns = feedLayout.cells,
             modifier = Modifier.fillMaxSize(),
             contentPadding =
                 PaddingValues(
-                    start = if (columns == 1) 0.dp else 16.dp,
-                    end = if (columns == 1) 0.dp else 16.dp,
+                    start = if (feedLayout.columns == 1) 0.dp else 16.dp,
+                    end = if (feedLayout.columns == 1) 0.dp else 16.dp,
                     top = 8.dp,
                     bottom = 80.dp,
                 ),
             horizontalArrangement =
                 Arrangement.spacedBy(
-                    if (columns == 1) 0.dp else 12.dp,
+                    if (feedLayout.columns == 1) 0.dp else 12.dp,
                 ),
             verticalArrangement =
                 Arrangement.spacedBy(
-                    if (columns == 1) 0.dp else 12.dp,
+                    if (feedLayout.columns == 1) 0.dp else 12.dp,
                 ),
         ) {
             items(8, key = { "shimmer_$it" }, contentType = { "shimmer" }) {
-                if (columns == 1) {
+                if (feedLayout.columns == 1) {
                     ShimmerVideoCardFullWidth()
                 } else {
                     ShimmerGridVideoCard()

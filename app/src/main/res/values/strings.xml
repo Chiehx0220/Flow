@@ -171,6 +171,7 @@
     <string name="share_message_template">Check out this song: %1$s by %2$s\nhttps://music.youtube.com/watch?v=%3$s</string>
     <string name="hz">Hz</string>
     <string name="kbps">kbps</string>
+    <string name="audio_bitrate_kbps_template">%1$d kbps</string>
     <string name="filter_discover">Discover</string>
     <string name="filter_popular">Popular</string>
     <string name="filter_deep_cuts">Deep cuts</string>
@@ -288,6 +289,11 @@
     <string name="filter_top">Top</string>
     <string name="filter_newest">Newest</string>
     <string name="filter_oldest">Oldest</string>
+    <string name="filter_timed">Timed</string>
+    <string name="no_timed_comments">No comments with a timestamp yet</string>
+    <string name="comment_hearted_by_creator">Hearted by the creator</string>
+    <string name="verified">Verified</string>
+    <string name="comments_with_count_template">Comments · %1$s</string>
     <string name="no_comments_yet">No comments yet</string>
     <string name="add_comment_placeholder">Add a comment...</string>
     <string name="comment_edited">edited</string>
@@ -322,6 +328,8 @@
     <string name="settings">Settings</string>
     <string name="select_artist">Select Artist</string>
     <string name="description">Description</string>
+    <string name="desc_see_more">See more</string>
+    <string name="desc_see_less">See less</string>
     <string name="copy_description">Copy description</string>
     <string name="description_copied">Description copied to clipboard</string>
     <string name="title_copied">Title copied to clipboard</string>
@@ -353,6 +361,13 @@
     <string name="close_player">Close player</string>
     <string name="views_template">%1$s views</string>
     <string name="chapters">Chapters</string>
+    <string name="transcript">Transcript</string>
+    <string name="transcript_show">Show transcript</string>
+    <string name="transcript_subtitle">Follow along using the transcript.</string>
+    <string name="transcript_unavailable">No transcript is available for this video</string>
+    <string name="transcript_search_hint">Search transcript</string>
+    <string name="transcript_no_matches">No lines match your search</string>
+    <string name="channel_links">Links</string>
     <string name="artist">Artist</string>
     <string name="playlist">Playlist</string>
     <string name="app_name_uppercase">FLOW</string>
@@ -387,6 +402,8 @@
         <item quantity="other">%1$d songs</item>
     </plurals>
     <string name="metadata_separator">·</string>
+    <!-- Separator between the parts of a one-line detail list, e.g. "OPUS · 160kbps · English" -->
+    <string name="list_separator_dot">" · "</string>
     <string name="player_time_separator"> / </string>
     <string name="you">You</string>
     <string name="empty_downloads">No downloads yet</string>
@@ -420,6 +437,13 @@
     <string name="filter_sort_by">Sort by</string>
     <string name="filter_hd">HD</string>
     <string name="filter_4k">4K</string>
+    <!-- 1440p resolution badge; the 4K and HD badges reuse filter_4k and filter_hd -->
+    <string name="quality_badge_2k">2K</string>
+    <!-- Compact resolution badges on the player quality pill; 4K and HD reuse filter_4k/filter_hd -->
+    <string name="quality_badge_qhd">QHD</string>
+    <string name="quality_badge_fhd">FHD</string>
+    <string name="quality_badge_sd">SD</string>
+    <string name="quality_badge_height_template">%1$dp</string>
     <string name="filter_subtitles">Subtitles</string>
     <string name="date_any">Any time</string>
     <string name="date_last_hour">Last hour</string>
@@ -1889,11 +1913,14 @@
     <string name="download_title_label">Title</string>
     <string name="download_format_label">Format</string>
     <string name="download_threads_label">Threads</string>
+    <string name="download_threads_decrease">Fewer download threads</string>
+    <string name="download_threads_increase">More download threads</string>
     <string name="download_no_compatible_audio">No compatible audio stream — download cannot proceed</string>
+    <!-- Quality shown in the downloads list for a SABR download, whose resolution is not known up front -->
+    <string name="download_quality_best">Best</string>
     <string name="audio_format_unknown">Audio</string>
-    <!-- Approximate download size shown beside a quality; %1$s is a formatted number -->
-    <string name="download_size_estimate_mb">~%1$s MB</string>
-    <string name="download_size_estimate_gb">~%1$s GB</string>
+    <!-- Approximate download size shown beside a quality; %1$s is a platform-formatted file size -->
+    <string name="download_size_estimate">~%1$s</string>
     <!-- Download dialog style (Content settings) -->
     <string name="download_menu_style_title">Download menu style</string>
     <string name="download_menu_style_subtitle">Choose how the download dialog looks</string>
@@ -2172,6 +2199,11 @@
     <string name="player_replay">Replay</string>
     <string name="player_seek_delta_forward">+%1$s</string>
     <string name="player_seek_delta_back">-%1$s</string>
+    <!-- Double-tap seek indicator: the chasing chevrons and the seconds the tap adds or removes -->
+    <string name="player_seek_seconds_forward">+%1$d</string>
+    <string name="player_seek_seconds_back">-%1$d</string>
+    <string name="player_seek_chevron_forward">&gt;</string>
+    <string name="player_seek_chevron_back">&lt;</string>
     <!-- New Video Player Strings -->
     <string name="player_settings_overlay_controls">Overlay Controls</string>
     <string name="player_settings_overlay_cast">Cast Button</string>
@@ -2808,4 +2840,8 @@
     <string name="remove_from_queue_confirmation">Are you sure you want to remove this video from the queue?</string>
     <string name="reorder_queue_item">Reorder queue item</string>
     <string name="music_search_no_results">No results for \"%1$s\"</string>
+    <plurals name="chapters_count_template">
+        <item quantity="one">%1$d chapter</item>
+        <item quantity="other">%1$d chapters</item>
+    </plurals>
 </resources>

@@ -4,7 +4,7 @@
     <string name="subscribers_count_template">%1$s subskrybentów</string>
     <string name="error_yt_music_premium_hint">Ten utwór jest dostępny tylko dla subskrybentów YouTube Music Premium.</string>
     <string name="support_flow_dev_desc">Jeśli uważasz, że Flow jest przydatny i chcesz wesprzeć jego rozwój, możesz wesprzeć go na Patreonie lub przekazać darowiznę za pośrednictwem poniższych adresów. Twoje wsparcie pomoże utrzymać projekt przy życiu!</string>
-    <string name="subscriptions_search_placeholder">Wyszukaj subskrypcje...</string>
+    <string name="subscriptions_search_placeholder">Wyszukaj subskrypcje ...</string>
     <string name="top_bar_subscriptions_title">Subskrypcje</string>
     <string name="subscribed">Zasubskrybowano</string>
     <string name="no_subscriptions_yet">Nie Dodano Jeszcze Subskrypcji</string>
@@ -107,7 +107,7 @@
     <string name="unsubscribed_from">Odsubskrybowano kanał %s</string>
     <string name="unsubscribe">Odsubskrybuj</string>
     <string name="share_video">Udostępnij film</string>
-    <string name="check_out_video_template">Sprawdź ten film: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="check_out_video_template">Sprawdź ten film: %1$s\n%2$s</string>
     <string name="related_videos">Polecane Filmy</string>
     <string name="quality_auto">Automatyczna</string>
     <string name="quality_auto_template">Automatyczna (%1$dp)</string>
@@ -1312,7 +1312,7 @@
     <string name="content_settings_share_without_text_title">Udostępniaj Linki bez Tekstu</string>
     <string name="content_settings_share_without_text_subtitle">Udostępniaj sam link do filmu, pomijając tekst „Zobacz ten film”</string>
     <string name="parallel_downloading_title">Pobieranie Równoległe</string>
-    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
+    <string name="share_link_only_template">%1$s</string>
     <string name="shorts_quality_settings_title">Jakość Shorts</string>
     <string name="shorts_quality_settings_subtitle">Ustaw domyślną rozdzielczość dla Shorts</string>
     <string name="sb_user_id_not_set">Dotknij, aby ustawić lub wygenerować ID użytkownika</string>

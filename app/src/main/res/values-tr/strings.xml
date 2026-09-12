@@ -130,7 +130,7 @@
     <string name="remove">Kaldır</string>
     <string name="filter_workout">Antrenman</string>
     <string name="codec_label">Kodek</string>
-    <string name="check_out_video_template">Şu videoya göz at: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="check_out_video_template">Şu videoya göz at: %1$s\n%2$s</string>
     <string name="play_mode_suggestion_title">Çalma modu önerisi</string>
     <string name="play_mode_suggestion_body">Bu video 2 dakikadan daha kısa. Özel bir oynatıcıya geçmek ister misin?</string>
     <string name="action_go_to_home">Ana sayfaya git</string>
@@ -1623,7 +1623,7 @@
     <string name="local_media_grant">Erişim izni ver</string>
     <string name="history_tab_local_videos">Yerel videolar</string>
     <string name="history_tab_local_music">Yerel müzikler</string>
-    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
+    <string name="share_link_only_template">%1$s</string>
     <string name="subscriptions_sort_label">Kanalları sırala</string>
     <string name="subscriptions_sort_default">Varsayılan</string>
     <string name="subscriptions_sort_name">Ad (A–Z)</string>

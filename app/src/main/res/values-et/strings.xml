@@ -135,7 +135,7 @@
     <string name="subscribed_to">Oled tellinud: %s</string>
     <string name="unsubscribed_from">Oled lõpetanud tellimuse: %s</string>
     <string name="share_video">Jaga videot</string>
-    <string name="check_out_video_template">Vaata seda videot: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="check_out_video_template">Vaata seda videot: %1$s\n%2$s</string>
     <string name="related_videos">Seotud videod</string>
     <string name="quality_auto_template">Automaatne (%1$dp)</string>
     <string name="video_marked_not_interested">Video on märgitud mittehuvitavaks</string>

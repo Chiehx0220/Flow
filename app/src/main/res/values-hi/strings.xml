@@ -96,7 +96,7 @@
     <string name="unsubscribed_from">%s से अनसब्सक्राइब किया</string>
     <string name="unsubscribe">अनसब्सक्राइब करें</string>
     <string name="share_video">वीडियो सांझा करें</string>
-    <string name="check_out_video_template">यह वीडियो देखें: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="check_out_video_template">यह वीडियो देखें: %1$s\n%2$s</string>
     <string name="related_videos">संबंधित वीडियो</string>
     <string name="quality_auto">स्वचालित</string>
     <string name="quality_auto_template">स्वचालित (%1$dp)</string>
@@ -1147,7 +1147,7 @@
     <string name="open">खोलें</string>
     <string name="resume">फिर से शुरू करें</string>
     <string name="refresh_lyrics">लिरिक्स रिफ्रेश करें</string>
-    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
+    <string name="share_link_only_template">%1$s</string>
     <string name="not_interested_toast">समझ गए! आपको इस तरह का कंटेंट कम दिखाई देगा।</string>
     <string name="quick_actions_error_template">एरर: %1$s</string>
     <string name="playlist_video_added_template">%1$s जोड़ा गया</string>

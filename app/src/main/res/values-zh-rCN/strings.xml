@@ -138,8 +138,8 @@
     <string name="unsubscribed_from">取消订阅 %s</string>
     <string name="unsubscribe">退订</string>
     <string name="share_video">分享视频</string>
-    <string name="check_out_video_template">看看这个视频：%1$s\nhttps://youtube.com/watch?v=%2$s</string>
-    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
+    <string name="check_out_video_template">看看这个视频：%1$s\n%2$s</string>
+    <string name="share_link_only_template">%1$s</string>
     <string name="content_settings_share_without_text_title">分享不带文字的链接</string>
     <string name="content_settings_share_without_text_subtitle">仅分享视频链接，不显示“查看此视频”消息</string>
     <string name="related_videos">相关视频</string>

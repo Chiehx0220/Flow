@@ -170,6 +170,7 @@ android {
     testOptions {
         unitTests {
             isReturnDefaultValues = true
+            isIncludeAndroidResources = true
         }
     }
 }
@@ -215,6 +216,10 @@ dependencies {
     // --- Lifecycle & Architecture ---
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.window)
+    implementation(libs.androidx.window.core)
+    implementation(libs.androidx.material3.adaptive.layout)
+    implementation(libs.androidx.material3.adaptive.navigation)
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
     // --- Layouts ---
@@ -320,6 +325,13 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.hilt.android.testing)
     kspTest(libs.hilt.android.compiler)
+
+    // Compose UI tests in the JVM (Robolectric) so CI's unit-test task covers them
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.ui.test.junit4)
 
     // Room migration tests (device-sync schema 20→23)
     androidTestImplementation(libs.androidx.room.testing)

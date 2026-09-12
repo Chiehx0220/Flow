@@ -14,8 +14,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -64,15 +62,16 @@ import io.github.aedev.flow.player.stream.StreamProcessor
 import io.github.aedev.flow.player.stream.VideoCodecUtils
 import io.github.aedev.flow.player.toDisplayAspectRatioOrNull
 import io.github.aedev.flow.ui.components.ChannelAvatarImage
-import io.github.aedev.flow.ui.components.PlaybackSpeedSlider
-import io.github.aedev.flow.ui.components.playbackSpeedOptions
-import io.github.aedev.flow.ui.components.playbackSpeedSliderPresets
+import io.github.aedev.flow.ui.components.shared.MediaAudioTrackRow
+import io.github.aedev.flow.ui.components.shared.MediaPlaybackSpeedPicker
+import io.github.aedev.flow.ui.components.shared.MediaQualitySelectorContent
+import io.github.aedev.flow.ui.components.shared.MediaQualitySelectorOption
+import io.github.aedev.flow.ui.components.shared.MediaSeekBar
+import io.github.aedev.flow.ui.components.shared.audioTrackBitrateLabel
+import io.github.aedev.flow.ui.components.shared.audioTrackFallbackLabel
 import io.github.aedev.flow.ui.components.shared.rememberDateDisplaySettings
-import io.github.aedev.flow.ui.screens.player.components.PlayerQualitySelectorContent
-import io.github.aedev.flow.ui.screens.player.components.PlayerQualitySelectorOption
-import io.github.aedev.flow.ui.screens.player.components.SeekbarWithPreview
-import io.github.aedev.flow.ui.screens.player.components.VideoAmbientBackground
-import io.github.aedev.flow.ui.screens.player.components.rememberAmbientFrame
+import io.github.aedev.flow.ui.components.videoplayer.ambient.VideoAmbientBackground
+import io.github.aedev.flow.ui.components.videoplayer.ambient.rememberAmbientFrame
 import io.github.aedev.flow.utils.DateContext
 import io.github.aedev.flow.utils.formatViewCount
 import kotlinx.coroutines.delay
@@ -1017,7 +1016,7 @@ internal fun ShortVideoPage(
             // ── Scrubbable Progress Bar ──
         }
         if (pageState.duration > 0 && !isInPip) {
-            SeekbarWithPreview(
+            MediaSeekBar(
                 value = {
                     if (pageState.isDragging) {
                         pageState.dragProgress
@@ -1218,7 +1217,7 @@ internal fun ShortVideoPage(
             (pageState.currentStreamInfo != null || pageState.currentInnerTubeVideoFormats.isNotEmpty())
         ) {
             if (settings.downloadDialogStyle == io.github.aedev.flow.data.local.DownloadDialogStyle.COMPACT) {
-                io.github.aedev.flow.ui.screens.player.components.DownloadQualityDialogCompact(
+                io.github.aedev.flow.ui.components.shared.MediaDownloadDialogCompact(
                     streamInfo = pageState.currentStreamInfo,
                     streamSizes = pageState.currentStreamSizes,
                     innerTubeVideoFormats = pageState.currentInnerTubeVideoFormats,
@@ -1227,7 +1226,7 @@ internal fun ShortVideoPage(
                     onDismiss = { pageState.showDownloadDialog = false },
                 )
             } else {
-                io.github.aedev.flow.ui.screens.player.components.DownloadQualityDialog(
+                io.github.aedev.flow.ui.components.shared.MediaDownloadDialog(
                     streamInfo = pageState.currentStreamInfo,
                     streamSizes = pageState.currentStreamSizes,
                     innerTubeVideoFormats = pageState.currentInnerTubeVideoFormats,
@@ -1564,14 +1563,6 @@ private fun ShortsSpeedSheet(
     sheetInsets: ShortsSheetInsetState,
     onDismiss: () -> Unit,
 ) {
-    val speeds =
-        remember(customSpeedsEnabled, customSpeedPresetsRaw) {
-            playbackSpeedOptions(customSpeedsEnabled, customSpeedPresetsRaw)
-        }
-    val sliderPresets =
-        remember(customSpeedsEnabled, customSpeedPresetsRaw) {
-            playbackSpeedSliderPresets(customSpeedsEnabled, customSpeedPresetsRaw)
-        }
     ShortsPlayerSheet(insets = sheetInsets, onDismiss = onDismiss) {
         Column(
             modifier =
@@ -1600,63 +1591,25 @@ private fun ShortsSpeedSheet(
                 }
             }
             HorizontalDivider()
-            if (speedSliderEnabled) {
-                PlaybackSpeedSlider(
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState()),
+            ) {
+                MediaPlaybackSpeedPicker(
                     currentSpeed = currentSpeed,
-                    quickPresets = sliderPresets,
+                    sliderEnabled = speedSliderEnabled,
+                    customSpeedsEnabled = customSpeedsEnabled,
+                    customSpeedPresetsRaw = customSpeedPresetsRaw,
                     onSpeedSelected = onSpeedSelected,
-                    onSpeedSelectionFinished = onSpeedSelectionFinished,
+                    onSliderSelectionFinished = onSpeedSelectionFinished,
+                    onSpeedRowSelected = { speed ->
+                        onSpeedSelectionFinished(speed)
+                        onDismiss()
+                    },
                 )
-            } else {
-                LazyColumn {
-                    items(speeds, key = { it }) { speed ->
-                        val isSelected = speed == currentSpeed
-                        Surface(
-                            onClick = {
-                                onSpeedSelected(speed)
-                                onSpeedSelectionFinished(speed)
-                                onDismiss()
-                            },
-                            color = Color.Transparent,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Row(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 24.dp, vertical = 14.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text =
-                                        if (speed == 1.0f) {
-                                            stringResource(R.string.normal)
-                                        } else {
-                                            stringResource(
-                                                R.string.playback_speed_multiplier,
-                                                speed.toString(),
-                                            )
-                                        },
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color =
-                                        if (isSelected) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurface
-                                        },
-                                )
-                                if (isSelected) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
     }
@@ -1685,66 +1638,22 @@ private fun ShortsAudioTrackSheet(
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
             )
             HorizontalDivider()
-            LazyColumn {
-                items(audioStreams.size) { index ->
-                    val stream = audioStreams[index]
-                    val displayName =
-                        StreamProcessor.audioTrackDisplayName(stream)
-                            ?: stringResource(
-                                R.string.audio_track_number_template,
-                                stringResource(R.string.audio_track),
-                                index + 1,
-                            )
-                    val bitrateLabel = if (stream.averageBitrate >= 1000) "${stream.averageBitrate / 1000} kbps" else ""
-                    val isSelected = index == selectedIndex
-                    val selectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    Surface(
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState()),
+            ) {
+                audioStreams.forEachIndexed { index, stream ->
+                    MediaAudioTrackRow(
+                        label =
+                            StreamProcessor.audioTrackDisplayName(stream)
+                                ?: audioTrackFallbackLabel(index),
+                        supportingText = audioTrackBitrateLabel(stream.averageBitrate),
+                        selected = index == selectedIndex,
                         onClick = { onTrackSelected(index) },
-                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-                        contentColor = if (isSelected) selectedContentColor else MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 24.dp, vertical = 14.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column {
-                                Text(
-                                    text = displayName,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color =
-                                        if (isSelected) {
-                                            selectedContentColor
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurface
-                                        },
-                                )
-                                if (bitrateLabel.isNotEmpty()) {
-                                    Text(
-                                        text = bitrateLabel,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color =
-                                            if (isSelected) {
-                                                selectedContentColor.copy(alpha = 0.72f)
-                                            } else {
-                                                MaterialTheme.colorScheme.onSurfaceVariant
-                                            },
-                                    )
-                                }
-                            }
-                            if (isSelected) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = null,
-                                    tint = selectedContentColor,
-                                )
-                            }
-                        }
-                    }
+                    )
                 }
             }
         }
@@ -1783,7 +1692,7 @@ private fun ShortsQualitySheet(
                     val isSelected =
                         selectedVideoUrl?.let { it == quality.videoUrl }
                             ?: (quality.heightClass == selectedHeight)
-                    PlayerQualitySelectorOption(
+                    MediaQualitySelectorOption(
                         item = quality,
                         height = quality.heightClass,
                         label = quality.label,
@@ -1791,7 +1700,6 @@ private fun ShortsQualitySheet(
                         supportingText = quality.codecLabel.takeIf { it.isNotBlank() },
                         codecKey = quality.codecKey,
                         codecLabel = quality.codecLabel,
-                        streamKey = quality.videoUrl,
                     )
                 }
             Column(
@@ -1801,7 +1709,7 @@ private fun ShortsQualitySheet(
                         .weight(1f, fill = false)
                         .verticalScroll(rememberScrollState()),
             ) {
-                PlayerQualitySelectorContent(
+                MediaQualitySelectorContent(
                     options = selectorOptions,
                     groupedByResolution = groupedByResolution,
                     onOptionSelected = onQualitySelected,
