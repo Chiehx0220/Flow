@@ -46,8 +46,6 @@ object WatchHistoryMerger {
             isShort = x.isShort || y.isShort,
             hlc = Crdt.maxHlc(x.hlc, y.hlc),
             deleted = Crdt.resolveDeleted(x.deleted, x.hlc, y.deleted, y.hlc),
-            // A videoId belongs to one service; 0 only means "unknown" here, so a real value from
-            // either side must survive a merge against a stale/pre-fix record still holding 0.
             serviceId = if (primary.serviceId != 0) primary.serviceId else secondary.serviceId,
         )
     }
@@ -146,8 +144,6 @@ object SubscribedChannelsMerger {
             isMusic = x.isMusic || y.isMusic, // same music↔video leak rule as watch history
             hlc = Crdt.maxHlc(x.hlc, y.hlc),
             deleted = Crdt.resolveDeleted(x.deleted, x.hlc, y.deleted, y.hlc),
-            // A channelId belongs to one service; 0 only means "unknown" here, so a real value from
-            // either side must survive a merge against a stale/pre-fix record still holding 0.
             serviceId = if (winner.serviceId != 0) winner.serviceId else loser.serviceId,
         )
     }

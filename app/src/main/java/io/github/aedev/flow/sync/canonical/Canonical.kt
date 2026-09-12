@@ -36,7 +36,7 @@ data class CanonicalWatchHistory(
     val isShort: Boolean = false,
     val hlc: String = "",
     val deleted: Boolean = false,
-    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. Absent on the wire means 0. */
+    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. */
     val serviceId: Int = 0,
 )
 
@@ -143,7 +143,7 @@ data class CanonicalSubscribedChannel(
     val isMusic: Boolean = false,
     val hlc: String = "",
     val deleted: Boolean = false,
-    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. Absent on the wire means 0. */
+    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. */
     val serviceId: Int = 0,
 )
 

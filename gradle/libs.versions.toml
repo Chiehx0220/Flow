@@ -13,15 +13,7 @@ coil = "3.5.0"
 composeReorderable = "3.1.0"
 hilt = "2.60.1"
 hiltNavigationCompose = "1.4.0"
-# Our own fork of PipePipeExtractor (Chiehx0220/PipePipeExtractor, forked from
-# InfinityLoop1308/PipePipeExtractor), which itself swaps off stock TeamNewPipe/NewPipeExtractor
-# for Bilibili support + upstream stability fixes. Forked 2026-09-12 from v5.3.1 (c0cd0d61) so we
-# can align base-class layout with stock NewPipeExtractor ourselves instead of waiting on upstream.
-# 710f57de2 relocated ChannelTabExtractor/ChannelTabInfo/ChannelTabs into the channel.tabs package,
-# matching stock NewPipeExtractor's layout (was flat under channel/ and linkhandler/). Bumped to
-# b7162d038 to add back UnsupportedContentInCountryException/SignInConfirmNotBotException/
-# UnsupportedTabException, which stock has and this fork was missing. See ppe-ref clone for these
-# commits' source.
+# Our fork of PipePipeExtractor (Chiehx0220/PipePipeExtractor), pinned commit.
 newPipeExtractor = "b7162d0385a6cbd100da32b7d42ea83030da182a"
 okhttp = "5.4.0"
 ktor = "3.5.2"
