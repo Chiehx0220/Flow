@@ -99,6 +99,8 @@ data class CanonicalLike(
     val title: String = "",
     val channelName: String = "",
     val thumbnailUrl: String = "",
+    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. */
+    val serviceId: Int = 0,
 ) {
     companion object {
         const val KIND_VIDEO = "video"

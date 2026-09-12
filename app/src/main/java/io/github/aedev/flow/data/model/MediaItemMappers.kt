@@ -51,4 +51,5 @@ fun LikedVideoInfo.toVideo(): Video =
         viewCount = -1L,
         uploadDate = "",
         timestamp = likedAt,
+        serviceId = serviceId,
     )

@@ -2436,7 +2436,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 val thumbnail = params["thumbnail"]
                 val uploaderUrl = params["uploaderUrl"]
                 when (action) {
-                    "like" -> dbHelper.nativeLikeVideo(url, title, uploader, thumbnail, uploaderUrl)
+                    "like" -> dbHelper.nativeLikeVideo(url, title, uploader, thumbnail, uploaderUrl, serviceId)
                     "dislike" -> dbHelper.nativeDislikeVideo(url, title, uploader, thumbnail, uploaderUrl)
                     "remove" -> dbHelper.nativeRemoveLikeState(url)
                 }

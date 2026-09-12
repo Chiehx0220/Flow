@@ -143,6 +143,7 @@ class VideoEngagementUseCase
                     title = video.title,
                     thumbnail = video.thumbnailUrl,
                     channelName = video.channelName,
+                    serviceId = video.serviceId,
                 ),
             )
             onApplied()

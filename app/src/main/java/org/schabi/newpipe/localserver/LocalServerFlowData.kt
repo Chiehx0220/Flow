@@ -217,11 +217,13 @@ fun HistoryDbHelper.nativeLikeState(videoUrl: String): String? {
     return runBlocking { likedVideosRepository().getLikeState(videoId).first() }
 }
 
-fun HistoryDbHelper.nativeLikeVideo(url: String, title: String, uploader: String, thumbnailUrl: String?, uploaderUrl: String?) {
+fun HistoryDbHelper.nativeLikeVideo(url: String, title: String, uploader: String, thumbnailUrl: String?, uploaderUrl: String?, serviceId: Int) {
     val videoId = LocalHttpServer.getVideoId(url)
     if (videoId.isEmpty()) return
     runBlocking {
-        likedVideosRepository().likeVideo(LikedVideoInfo(videoId = videoId, title = title, thumbnail = thumbnailUrl ?: "", channelName = uploader))
+        likedVideosRepository().likeVideo(
+            LikedVideoInfo(videoId = videoId, title = title, thumbnail = thumbnailUrl ?: "", channelName = uploader, serviceId = serviceId),
+        )
         reportRatingSignal(videoId, title, uploader, thumbnailUrl, uploaderUrl, InteractionType.LIKED)
     }
 }

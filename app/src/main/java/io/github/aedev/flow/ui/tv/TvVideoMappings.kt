@@ -77,4 +77,5 @@ internal fun LikedVideoInfo.toTvVideo(): Video =
         uploadDate = "",
         timestamp = likedAt,
         isMusic = isMusic,
+        serviceId = serviceId,
     )

@@ -156,6 +156,7 @@ object LikesMapper {
             title = info.title,
             channelName = info.channelName,
             thumbnailUrl = info.thumbnail,
+            serviceId = info.serviceId,
         )
 
     fun toLikedInfo(c: CanonicalLike): LikedVideoInfo =
@@ -166,5 +167,6 @@ object LikesMapper {
             channelName = c.meta.artist.ifBlank { c.channelName },
             likedAt = if (c.updatedAtMs > 0) c.updatedAtMs else System.currentTimeMillis(),
             isMusic = c.kind == CanonicalLike.KIND_MUSIC,
+            serviceId = c.serviceId,
         )
 }

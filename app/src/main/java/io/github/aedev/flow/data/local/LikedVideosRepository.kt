@@ -122,7 +122,8 @@ class LikedVideosRepository private constructor(
     fun getLikedMusicFlow(): Flow<List<LikedVideoInfo>> = getAllLikedVideos().map { list -> list.filter { it.isMusic } }
 
     private fun serializeVideo(video: LikedVideoInfo): String =
-        "${video.videoId}|${video.title}|${video.thumbnail}|${video.channelName}|${video.likedAt}|${video.isMusic}"
+        "${video.videoId}|${video.title}|${video.thumbnail}|${video.channelName}|${video.likedAt}|" +
+            "${video.isMusic}|${video.serviceId}"
 
     private fun deserializeVideo(data: String): LikedVideoInfo? =
         try {
@@ -135,6 +136,7 @@ class LikedVideosRepository private constructor(
                     channelName = parts[3],
                     likedAt = parts[4].toLong(),
                     isMusic = if (parts.size >= 6) parts[5].toBoolean() else false,
+                    serviceId = if (parts.size >= 7) parts[6].toIntOrNull() ?: 0 else 0,
                 )
             } else {
                 null
@@ -151,4 +153,6 @@ data class LikedVideoInfo(
     val channelName: String,
     val likedAt: Long = System.currentTimeMillis(),
     val isMusic: Boolean = false,
+    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. */
+    val serviceId: Int = 0,
 )
