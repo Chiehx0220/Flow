@@ -38,6 +38,7 @@ object WatchHistoryMapper {
             isShort = e.isShort,
             hlc = Hlc(e.timestamp, 0, node).encode(),
             deleted = false,
+            serviceId = e.serviceId,
         )
     }
 
@@ -56,6 +57,7 @@ object WatchHistoryMapper {
             isMusic = c.isMusic,
             isShort = c.isShort,
             isLocal = false, // synced rows are never device-local files
+            serviceId = c.serviceId,
         )
     }
 }
@@ -72,6 +74,7 @@ object SubscribedChannelsMapper {
         isMusic = s.isMusic,
         hlc = Hlc(s.subscribedAt, 0, node).encode(),
         deleted = false,
+        serviceId = s.serviceId,
     )
 
     /** An unsubscribe, stamped with when it happened so it can out-rank the peer's subscribe. */
@@ -93,6 +96,7 @@ object SubscribedChannelsMapper {
             channelThumbnail = c.avatarUrl,
             subscribedAt = c.subscribedAtMs,
             isMusic = c.isMusic,
+            serviceId = c.serviceId,
             // lastVideoId / lastCheckTime / lastFeedFetchAt / isNotificationEnabled stay device-local:
             // they describe this device's feed bookkeeping, not the subscription itself.
         )

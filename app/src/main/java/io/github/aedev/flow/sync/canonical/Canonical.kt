@@ -36,6 +36,8 @@ data class CanonicalWatchHistory(
     val isShort: Boolean = false,
     val hlc: String = "",
     val deleted: Boolean = false,
+    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. Absent on the wire means 0. */
+    val serviceId: Int = 0,
 )
 
 @Serializable
@@ -141,6 +143,8 @@ data class CanonicalSubscribedChannel(
     val isMusic: Boolean = false,
     val hlc: String = "",
     val deleted: Boolean = false,
+    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. Absent on the wire means 0. */
+    val serviceId: Int = 0,
 )
 
 // --- Brain CRDT primitives (wire forms must match the desktop's `canonical.rs` byte for byte) ---
